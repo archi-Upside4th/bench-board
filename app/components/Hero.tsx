@@ -46,7 +46,7 @@ export function Hero({ stats, eyebrow }: { stats: Stat[]; eyebrow: string }) {
         <div className="section-eyebrow" style={{ color: "var(--accent-hi)" }}>
           {eyebrow}
         </div>
-        <h1 style={{ fontSize: 38, margin: "10px 0 0", letterSpacing: "-0.025em" }}>
+        <h1 style={{ fontSize: 56, margin: "10px 0 0", letterSpacing: "-0.03em" }}>
           Leaderboard
         </h1>
         <p className="lede" style={{ marginTop: 14, maxWidth: "64ch" }}>

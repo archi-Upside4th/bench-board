@@ -130,7 +130,7 @@
   h2 { font-size: 22px; margin: 6px 0 4px; letter-spacing: -0.015em; }
   h3 { font-size: 15px; margin: 0 0 8px; }
   p  { color: var(--ink-2); margin: 0; }
-  .lede { color: var(--mute); font-size: 13.5px; max-width: 62ch; }
+  .lede { color: var(--mute); font-size: 15px; max-width: 62ch; }
 
   /* Header */
   header.site {
