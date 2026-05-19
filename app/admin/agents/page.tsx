@@ -49,7 +49,7 @@ export default async function AgentsAdmin() {
               <th>Vendor</th>
               <th>Release</th>
               <th>Color</th>
-              <th>Runs participated</th>
+              <th className="num">Runs participated</th>
               <th></th>
             </tr>
           </thead>
@@ -67,7 +67,7 @@ export default async function AgentsAdmin() {
                   <td className="vendor">{a.vendor}</td>
                   <td className="num-col">{a.releaseDate}</td>
                   <td className="mono" style={{ fontSize: 11.5 }}>{a.color}</td>
-                  <td className="num-col">{count}</td>
+                  <td className="num num-col">{count}</td>
                   <td>
                     <form action={deleteAgent}>
                       <input type="hidden" name="id" value={a.id} />

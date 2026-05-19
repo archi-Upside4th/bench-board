@@ -375,13 +375,13 @@ export function RunCreateForm({ allAgents }: { allAgents: Agent[] }) {
                     <thead>
                       <tr>
                         <th style={{ width: 180 }}>Agent</th>
-                        <th>Precision</th>
-                        <th>Recall</th>
-                        <th>F1</th>
-                        <th>F1 CI low</th>
-                        <th>F1 CI high</th>
-                        <th>$ / task</th>
-                        <th>N tasks</th>
+                        <th className="num">Precision</th>
+                        <th className="num">Recall</th>
+                        <th className="num">F1</th>
+                        <th className="num">F1 CI low</th>
+                        <th className="num">F1 CI high</th>
+                        <th className="num">$ / task</th>
+                        <th className="num">N tasks</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -423,11 +423,11 @@ export function RunCreateForm({ allAgents }: { allAgents: Agent[] }) {
                     <thead>
                       <tr>
                         <th style={{ width: 180 }}>Agent</th>
-                        <th>Success</th>
-                        <th>Partial</th>
-                        <th>Fail</th>
-                        <th>$ / task</th>
-                        <th>N tasks</th>
+                        <th className="num">Success</th>
+                        <th className="num">Partial</th>
+                        <th className="num">Fail</th>
+                        <th className="num">$ / task</th>
+                        <th className="num">N tasks</th>
                       </tr>
                     </thead>
                     <tbody>

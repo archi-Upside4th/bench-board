@@ -87,13 +87,13 @@ export default async function RunDetailPage({ params }: PageParams) {
                 <tr>
                   <th>Rank</th>
                   <th>Agent</th>
-                  <th>Precision</th>
-                  <th>Recall</th>
-                  <th>F1</th>
-                  <th>CI low</th>
-                  <th>CI high</th>
-                  <th>$ / task</th>
-                  <th>N tasks</th>
+                  <th className="num">Precision</th>
+                  <th className="num">Recall</th>
+                  <th className="num">F1</th>
+                  <th className="num">CI low</th>
+                  <th className="num">CI high</th>
+                  <th className="num">$ / task</th>
+                  <th className="num">N tasks</th>
                 </tr>
               </thead>
               <tbody>
@@ -110,13 +110,13 @@ export default async function RunDetailPage({ params }: PageParams) {
                           <span className="agent-name">{r.agentId}</span>
                         </div>
                       </td>
-                      <td><InlineCell initial={r.precision} fmt={fmt2} onSave={save("precision")} /></td>
-                      <td><InlineCell initial={r.recall} fmt={fmt2} onSave={save("recall")} /></td>
-                      <td><InlineCell initial={r.f1} fmt={fmt2} onSave={save("f1")} /></td>
-                      <td><InlineCell initial={r.f1CiLow} fmt={fmt2} onSave={save("f1CiLow")} /></td>
-                      <td><InlineCell initial={r.f1CiHigh} fmt={fmt2} onSave={save("f1CiHigh")} /></td>
-                      <td><InlineCell initial={r.costUsdPerTask} fmt={fmtMoney} parse={(s) => Number(s.replace("$", ""))} onSave={save("costUsdPerTask")} /></td>
-                      <td><InlineCell initial={r.nTasks} fmt={fmt0} onSave={save("nTasks")} /></td>
+                      <td className="num"><InlineCell initial={r.precision} fmt={fmt2} onSave={save("precision")} /></td>
+                      <td className="num"><InlineCell initial={r.recall} fmt={fmt2} onSave={save("recall")} /></td>
+                      <td className="num"><InlineCell initial={r.f1} fmt={fmt2} onSave={save("f1")} /></td>
+                      <td className="num"><InlineCell initial={r.f1CiLow} fmt={fmt2} onSave={save("f1CiLow")} /></td>
+                      <td className="num"><InlineCell initial={r.f1CiHigh} fmt={fmt2} onSave={save("f1CiHigh")} /></td>
+                      <td className="num"><InlineCell initial={r.costUsdPerTask} fmt={fmtMoney} parse={(s) => Number(s.replace("$", ""))} onSave={save("costUsdPerTask")} /></td>
+                      <td className="num"><InlineCell initial={r.nTasks} fmt={fmt0} onSave={save("nTasks")} /></td>
                     </tr>
                   );
                 })}
@@ -137,11 +137,11 @@ export default async function RunDetailPage({ params }: PageParams) {
                 <tr>
                   <th>Rank</th>
                   <th>Agent</th>
-                  <th>Success</th>
-                  <th>Partial</th>
-                  <th>Fail</th>
-                  <th>$ / task</th>
-                  <th>N tasks</th>
+                  <th className="num">Success</th>
+                  <th className="num">Partial</th>
+                  <th className="num">Fail</th>
+                  <th className="num">$ / task</th>
+                  <th className="num">N tasks</th>
                 </tr>
               </thead>
               <tbody>
@@ -158,11 +158,11 @@ export default async function RunDetailPage({ params }: PageParams) {
                           <span className="agent-name">{r.agentId}</span>
                         </div>
                       </td>
-                      <td><InlineCell initial={r.success} fmt={fmt2} onSave={save("success")} /></td>
-                      <td><InlineCell initial={r.partial} fmt={fmt2} onSave={save("partial")} /></td>
-                      <td><InlineCell initial={r.fail} fmt={fmt2} onSave={save("fail")} /></td>
-                      <td><InlineCell initial={r.costUsdPerTask} fmt={fmtMoney} parse={(s) => Number(s.replace("$", ""))} onSave={save("costUsdPerTask")} /></td>
-                      <td><InlineCell initial={r.nTasks} fmt={fmt0} onSave={save("nTasks")} /></td>
+                      <td className="num"><InlineCell initial={r.success} fmt={fmt2} onSave={save("success")} /></td>
+                      <td className="num"><InlineCell initial={r.partial} fmt={fmt2} onSave={save("partial")} /></td>
+                      <td className="num"><InlineCell initial={r.fail} fmt={fmt2} onSave={save("fail")} /></td>
+                      <td className="num"><InlineCell initial={r.costUsdPerTask} fmt={fmtMoney} parse={(s) => Number(s.replace("$", ""))} onSave={save("costUsdPerTask")} /></td>
+                      <td className="num"><InlineCell initial={r.nTasks} fmt={fmt0} onSave={save("nTasks")} /></td>
                     </tr>
                   );
                 })}
@@ -183,7 +183,7 @@ export default async function RunDetailPage({ params }: PageParams) {
                 <tr>
                   <th style={{ width: 180 }}>Agent</th>
                   {fpCategories.map((c) => (
-                    <th key={c} style={{ fontFamily: "var(--mono)", fontSize: 10, textTransform: "none", letterSpacing: 0, color: "var(--ink-2)" }}>
+                    <th key={c} className="num" style={{ fontFamily: "var(--mono)", fontSize: 10, textTransform: "none", letterSpacing: 0, color: "var(--ink-2)" }}>
                       {c}
                     </th>
                   ))}
@@ -204,7 +204,7 @@ export default async function RunDetailPage({ params }: PageParams) {
                       {fpCategories.map((c) => {
                         const v = rates.get(c) ?? 0;
                         return (
-                          <td key={c}>
+                          <td key={c} className="num">
                             <InlineCell
                               initial={v}
                               fmt={fmt2}

@@ -65,13 +65,13 @@ export default async function AdminHome() {
                 <tr>
                   <th>Rank</th>
                   <th>Agent</th>
-                  <th>F1</th>
+                  <th className="num">F1</th>
                   {previousPublic ? (
-                    <th>
+                    <th className="num">
                       vs <span className="mono">{previousPublic.version}</span>
                     </th>
                   ) : null}
-                  <th>$/task</th>
+                  <th className="num">$/task</th>
                 </tr>
               </thead>
               <tbody>
@@ -88,9 +88,9 @@ export default async function AdminHome() {
                           <span className="agent-name">{r.agentId}</span>
                         </div>
                       </td>
-                      <td className="num-col">{r.f1.toFixed(2)}</td>
+                      <td className="num num-col">{r.f1.toFixed(2)}</td>
                       {previousPublic ? (
-                        <td>
+                        <td className="num">
                           {delta === null ? (
                             <span className="adm-delta flat">new</span>
                           ) : Math.abs(delta) < 0.005 ? (
@@ -102,7 +102,7 @@ export default async function AdminHome() {
                           )}
                         </td>
                       ) : null}
-                      <td className="num-col">${r.costUsdPerTask.toFixed(2)}</td>
+                      <td className="num num-col">${r.costUsdPerTask.toFixed(2)}</td>
                     </tr>
                   );
                 })}

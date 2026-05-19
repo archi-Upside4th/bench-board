@@ -726,6 +726,11 @@
     vertical-align: middle;
   }
   table.adm-table tbody td.tight { padding: 2px 4px; }
+  table.adm-table th.num,
+  table.adm-table td.num { text-align: right; }
+  table.adm-table th.num { padding-right: 14px; }
+  table.adm-table th.last,
+  table.adm-table td.last { text-align: right; padding-right: 18px; }
   table.adm-table tbody tr:hover { background: rgba(255,255,255,0.02); }
   table.adm-table td .adm-input { padding: 6px 8px; font-size: 12px; }
 
