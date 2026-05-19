@@ -547,7 +547,7 @@
 
   /* FP horizontal bars */
   .fp-card { padding: 6px 16px 16px; }
-  .fp-row { display: grid; grid-template-columns: 200px 1fr 64px; gap: 20px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--line-soft); }
+  .fp-row { display: grid; grid-template-columns: 280px 1fr 100px; gap: 20px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--line-soft); }
   .fp-row:last-child { border-bottom: none; }
   .fp-cat { font-size: 13.5px; color: var(--ink); display: flex; align-items: center; gap: 10px; }
   .fp-cat .ix { color: var(--mute-2); font-family: var(--mono); font-size: 11.5px; }
@@ -560,7 +560,7 @@
   .fp-bar:hover { opacity: 1; outline: 1px solid var(--ink); }
   .fp-mean { font-family: var(--mono); font-size: 15px; color: var(--ink); text-align: right; font-weight: 500; }
   .fp-head {
-    display: grid; grid-template-columns: 200px 1fr 64px; gap: 20px;
+    display: grid; grid-template-columns: 280px 1fr 100px; gap: 20px;
     padding: 12px 0 10px; border-bottom: 1px solid var(--line); margin-bottom: 8px;
   }
   .fp-head-cell {
@@ -568,7 +568,7 @@
     color: var(--mute); font-weight: 500;
   }
   .fp-head-cell.right { text-align: right; }
-  .fp-axis { display: grid; grid-template-columns: 200px 1fr 64px; gap: 20px; padding-bottom: 10px; }
+  .fp-axis { display: grid; grid-template-columns: 280px 1fr 100px; gap: 20px; padding-bottom: 10px; }
   .fp-axis .axis-ticks { position: relative; height: 14px; }
   .fp-axis .axis-ticks span {
     position: absolute; top: 0; transform: translateX(-50%);
