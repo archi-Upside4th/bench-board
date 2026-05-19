@@ -60,7 +60,7 @@ export default async function Page() {
         <About />
         <footer className="foot">
           <div className="wrap row">
-            <span>© Team Benchclearing all rights reserved</span>
+            <span>© Team Benchclearing</span>
             <span className="runid">dataset {run.version}</span>
           </div>
         </footer>
