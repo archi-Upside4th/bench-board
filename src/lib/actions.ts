@@ -701,8 +701,14 @@ export async function importTrialResults(
     const t = r.data;
     if (!t.run_id) { summary.trialsSkipped++; summary.warnings.push("Skipped record without run_id"); continue; }
     if (!t.mode)   { summary.trialsSkipped++; summary.warnings.push(`Skipped record (run_id=${t.run_id}) without mode`); continue; }
-    const agentKey = (agentKeyField === "model" ? t.model : t.agent) ?? t.agent ?? t.model;
-    if (!agentKey) { summary.trialsSkipped++; summary.warnings.push(`Skipped record without agent identifier`); continue; }
+    const rawKey = (agentKeyField === "model" ? t.model : t.agent) ?? t.agent ?? t.model;
+    if (!rawKey) { summary.trialsSkipped++; summary.warnings.push(`Skipped record without agent identifier`); continue; }
+    // Normalize: case-insensitive matching, but keep prefix and version differences (lowercase preserves
+    // structure — only the case is collapsed). So:
+    //   "OpenAI/GPT-4"  ==  "openai/gpt-4"
+    //   "openai/gpt-4"  !=  "anthropic/gpt-4"       (different scaffold)
+    //   "openai/gpt-4"  !=  "openai/gpt-4-turbo"    (different version)
+    const agentKey = rawKey.toLowerCase();
 
     summary.trialsParsed++;
     const k = `${t.run_id}|${t.mode}|${agentKey}`;
