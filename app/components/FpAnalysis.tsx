@@ -6,8 +6,8 @@ type Props = {
   rows: { agentId: string; values: { category: string; rate: number }[] }[];
 };
 
-const MAX = 0.5;
-const TICKS = [0, 0.1, 0.2, 0.3, 0.4, 0.5];
+const MAX = 1.0;
+const TICKS = [0, 0.2, 0.4, 0.6, 0.8, 1.0];
 
 export function FpAnalysis({ agents, categories, rows }: Props) {
   if (rows.length === 0) return null;
