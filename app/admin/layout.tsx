@@ -28,7 +28,8 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           <nav style={{ display: "flex", gap: 16, fontSize: 13 }}>
             <Link href="/admin">Dashboard</Link>
             <Link href="/admin/agents">Agents</Link>
-            <Link href="/admin/runs/new">Import run</Link>
+            <Link href="/admin/runs/new">New run</Link>
+            <Link href="/admin/runs/import-trials">Import trials</Link>
             <Link href="/admin/site">Site text</Link>
             <Link href="/">View site</Link>
           </nav>
