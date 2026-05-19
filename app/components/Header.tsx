@@ -2,9 +2,11 @@ type Props = {
   datasetVersion: string;
   subtitle: string;
   githubUrl: string;
+  brandLeft: string;
+  brandRight: string;
 };
 
-export function Header({ datasetVersion, subtitle, githubUrl }: Props) {
+export function Header({ datasetVersion, subtitle, githubUrl, brandLeft, brandRight }: Props) {
   return (
     <header className="site">
       <div className="site-inner">
@@ -25,9 +27,9 @@ export function Header({ datasetVersion, subtitle, githubUrl }: Props) {
               </svg>
             </span>
             <span className="wordmark">
-              <span className="w-bench">Bench</span>
+              <span className="w-bench">{brandLeft}</span>
               <span className="w-dash">/</span>
-              <span className="w-clear">Board</span>
+              <span className="w-clear">{brandRight}</span>
             </span>
           </a>
           <span className="sub">{subtitle}</span>

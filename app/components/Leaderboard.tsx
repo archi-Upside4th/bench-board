@@ -6,10 +6,11 @@ type Props = {
   agents: Agent[];
   detect: DetectResult[];
   exploit: ExploitResult[];
+  title: string;
   lede: string;
 };
 
-export function Leaderboard({ agents, detect, exploit, lede }: Props) {
+export function Leaderboard({ agents, detect, exploit, title, lede }: Props) {
   const [mode, setMode] = useState<"detect" | "exploit">("detect");
   const byId = useMemo(() => new Map(agents.map((a) => [a.id, a])), [agents]);
 
@@ -58,7 +59,7 @@ export function Leaderboard({ agents, detect, exploit, lede }: Props) {
         <div className="section-head">
           <div className="left">
             <div className="section-eyebrow">Main results</div>
-            <h2>Agent ranking</h2>
+            <h2>{title}</h2>
             <p className="lede">{lede}</p>
           </div>
           <div className="tabs has-slider" role="tablist" ref={tabsRef}>

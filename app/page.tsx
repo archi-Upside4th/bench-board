@@ -1,5 +1,6 @@
 import { getLatestRun } from "@/lib/leaderboard";
 import { getSiteSettings } from "@/lib/settings";
+import { auth, isAdmin } from "@/auth";
 import { Header } from "./components/Header";
 import { Hero } from "./components/Hero";
 import { Leaderboard } from "./components/Leaderboard";
@@ -7,16 +8,25 @@ import { ParetoChart } from "./components/ParetoChart";
 import { FpAnalysis } from "./components/FpAnalysis";
 import { Methodology } from "./components/Methodology";
 import { About } from "./components/About";
+import { AdminQuickBar } from "./components/AdminQuickBar";
 
 export const dynamic = "force-dynamic";
 
 export default async function Page() {
-  const [data, s] = await Promise.all([getLatestRun(), getSiteSettings()]);
+  const [data, s, session] = await Promise.all([getLatestRun(), getSiteSettings(), auth()]);
+  const adminLogin = (session?.user as { login?: string } | undefined)?.login;
+  const showAdminBar = isAdmin(adminLogin);
 
   if (!data) {
     return (
       <>
-        <Header datasetVersion="—" subtitle={s.siteSubtitle} githubUrl={s.githubUrl} />
+        <Header
+          datasetVersion="—"
+          subtitle={s.siteSubtitle}
+          githubUrl={s.githubUrl}
+          brandLeft={s.brandLeft}
+          brandRight={s.brandRight}
+        />
         <main>
           <section className="first">
             <div className="wrap">
@@ -30,6 +40,7 @@ export default async function Page() {
             </div>
           </section>
         </main>
+        {showAdminBar ? <AdminQuickBar /> : null}
       </>
     );
   }
@@ -38,34 +49,60 @@ export default async function Page() {
 
   return (
     <>
-      <Header datasetVersion={run.version} subtitle={s.siteSubtitle} githubUrl={s.githubUrl} />
+      <Header
+        datasetVersion={run.version}
+        subtitle={s.siteSubtitle}
+        githubUrl={s.githubUrl}
+        brandLeft={s.brandLeft}
+        brandRight={s.brandRight}
+      />
       <main>
         <Hero
           eyebrow={s.heroEyebrow}
           title={s.heroTitle}
           description={s.heroDescription}
           stats={[
-            { k: "Total tasks", v: run.totalTasks, x: `dataset ${run.version}` },
+            { k: s.heroStat1Label, v: run.totalTasks, x: `dataset ${run.version}` },
             {
-              k: "Positive / Negative",
+              k: s.heroStat2Label,
               v: run.positiveTasks,
               vSmall: ` / ${run.negativeTasks}`,
               x: `${Math.round((run.positiveTasks / run.totalTasks) * 100)}% positive`,
             },
-            { k: "Agents evaluated", v: agents.length, x: "across vendors" },
-            { k: "Trials per task", v: run.trialsPerTask, x: run.judgeModel },
+            { k: s.heroStat3Label, v: agents.length, x: "across vendors" },
+            { k: s.heroStat4Label, v: run.trialsPerTask, x: run.judgeModel },
           ]}
         />
-        <Leaderboard agents={agents} detect={detect} exploit={exploit} lede={s.leaderboardLede} />
-        <ParetoChart agents={agents} detect={detect} lede={s.paretoLede} quote={s.paretoQuote} body={s.paretoBody} />
-        <FpAnalysis agents={agents} categories={fpCategories} rows={fpRows} lede={s.fpLede} />
+        <Leaderboard
+          agents={agents}
+          detect={detect}
+          exploit={exploit}
+          title={s.leaderboardTitle}
+          lede={s.leaderboardLede}
+        />
+        <ParetoChart
+          agents={agents}
+          detect={detect}
+          title={s.paretoTitle}
+          lede={s.paretoLede}
+          quote={s.paretoQuote}
+          body={s.paretoBody}
+        />
+        <FpAnalysis
+          agents={agents}
+          categories={fpCategories}
+          rows={fpRows}
+          title={s.fpTitle}
+          lede={s.fpLede}
+        />
         <Methodology
           run={run}
+          title={s.methodologyTitle}
           detectGrader={s.methodologyDetectGrader}
           exploitGrader={s.methodologyExploitGrader}
           citeBibtex={s.citeBibtex}
         />
-        <About lede={s.aboutLede} />
+        <About title={s.aboutTitle} lede={s.aboutLede} />
         <footer className="foot">
           <div className="wrap row">
             <span>{s.footerCopyright}</span>
@@ -73,6 +110,7 @@ export default async function Page() {
           </div>
         </footer>
       </main>
+      {showAdminBar ? <AdminQuickBar runId={run.id} /> : null}
     </>
   );
 }

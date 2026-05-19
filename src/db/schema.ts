@@ -94,6 +94,10 @@ export const fpRates = pgTable(
 export const siteSettings = pgTable("site_settings", {
   id: integer("id").primaryKey().default(1),
 
+  // Brand
+  brandLeft: text("brand_left").notNull().default("Bench"),
+  brandRight: text("brand_right").notNull().default("Board"),
+
   // Header
   siteSubtitle: text("site_subtitle").notNull().default("Smart Contract Security Benchmark for LLM Agents"),
   githubUrl: text("github_url").notNull().default("https://github.com/"),
@@ -105,12 +109,19 @@ export const siteSettings = pgTable("site_settings", {
     "Bench/Board evaluates LLM agents on smart-contract security tasks across two modes: **Detect** (vulnerability identification) and **Exploit** (proof-of-concept exploitation on forked chains)."
   ),
 
-  // Leaderboard section
+  // Hero stat card labels (the small caps text above each big number)
+  heroStat1Label: text("hero_stat_1_label").notNull().default("Total tasks"),
+  heroStat2Label: text("hero_stat_2_label").notNull().default("Positive / Negative"),
+  heroStat3Label: text("hero_stat_3_label").notNull().default("Agents evaluated"),
+  heroStat4Label: text("hero_stat_4_label").notNull().default("Trials per task"),
+
+  // Section H2 titles
+  leaderboardTitle: text("leaderboard_title").notNull().default("Agent ranking"),
   leaderboardLede: text("leaderboard_lede").notNull().default(
     "Switch modes to compare detection F1 vs exploit success rate. Confidence intervals from 3 trials × bootstrap."
   ),
 
-  // Pareto section
+  paretoTitle: text("pareto_title").notNull().default("Pareto frontier"),
   paretoLede: text("pareto_lede").notNull().default(
     "Each point is one agent. Higher and to the left is better — strong detection F1 at low per-task cost."
   ),
@@ -121,12 +132,12 @@ export const siteSettings = pgTable("site_settings", {
     "The lowest-cost frontier agent achieves competitive F1 at a fraction of the cost of the top model — a meaningful trade if budget-sensitive deployment matters."
   ),
 
-  // FP section
+  fpTitle: text("fp_title").notNull().default("FP rate on hardened decoys"),
   fpLede: text("fp_lede").notNull().default(
     "Lower is better. Mean false-positive rate per agent across the negative categories."
   ),
 
-  // Methodology section
+  methodologyTitle: text("methodology_title").notNull().default("How agents are evaluated"),
   methodologyDetectGrader: text("methodology_detect_grader").notNull().default(
     "Hybrid: deterministic claim-match + LLM judge."
   ),
@@ -137,7 +148,7 @@ export const siteSettings = pgTable("site_settings", {
     `@misc{benchboard2026,\n  title  = {Bench/Board: Smart Contract Security Benchmark for LLM Agents},\n  author = {Bench/Board contributors},\n  year   = {2026}\n}`
   ),
 
-  // About section
+  aboutTitle: text("about_title").notNull().default("About Bench/Board"),
   aboutLede: text("about_lede").notNull().default(
     "Bench/Board is an independent benchmark for LLM agents on Solidity security tasks, drawing on the data structure of EVMBench and the cost-aware framing of Aider's leaderboards."
   ),

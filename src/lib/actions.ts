@@ -422,6 +422,30 @@ export async function updateRunMeta(input: z.input<typeof runMetaSchema>) {
   bustCaches();
 }
 
+const runMetaTextSchema = z.object({
+  id: z.number().int(),
+  field: z.enum(["version", "judgeModel"]),
+  value: z.string().min(1).max(400),
+});
+export async function updateRunMetaText(input: z.input<typeof runMetaTextSchema>) {
+  await assertAdmin();
+  const { id, field, value } = runMetaTextSchema.parse(input);
+  await db.update(evalRuns).set({ [field]: value }).where(eq(evalRuns.id, id));
+  bustCaches();
+}
+
+const runMetaNumberSchema = z.object({
+  id: z.number().int(),
+  field: z.enum(["trialsPerTask", "totalTasks", "positiveTasks", "negativeTasks", "categoriesCount"]),
+  value: z.number().int().nonnegative(),
+});
+export async function updateRunMetaNumber(input: z.input<typeof runMetaNumberSchema>) {
+  await assertAdmin();
+  const { id, field, value } = runMetaNumberSchema.parse(input);
+  await db.update(evalRuns).set({ [field]: value }).where(eq(evalRuns.id, id));
+  bustCaches();
+}
+
 export async function setRunPublic(runId: number, isPublic: boolean) {
   await assertAdmin();
   await db.update(evalRuns).set({ isPublic }).where(eq(evalRuns.id, runId));
@@ -437,19 +461,30 @@ export async function deleteRun(runId: number) {
 /* ============================ Site settings ============================ */
 
 const siteSettingsSchema = z.object({
+  brandLeft: z.string().max(40),
+  brandRight: z.string().max(40),
   siteSubtitle: z.string().max(200),
   githubUrl: z.string().url().or(z.literal("")),
   heroEyebrow: z.string().max(80),
   heroTitle: z.string().max(80),
   heroDescription: z.string().max(800),
+  heroStat1Label: z.string().max(80),
+  heroStat2Label: z.string().max(80),
+  heroStat3Label: z.string().max(80),
+  heroStat4Label: z.string().max(80),
+  leaderboardTitle: z.string().max(120),
   leaderboardLede: z.string().max(800),
+  paretoTitle: z.string().max(120),
   paretoLede: z.string().max(800),
   paretoQuote: z.string().max(400),
   paretoBody: z.string().max(800),
+  fpTitle: z.string().max(120),
   fpLede: z.string().max(800),
+  methodologyTitle: z.string().max(120),
   methodologyDetectGrader: z.string().max(400),
   methodologyExploitGrader: z.string().max(400),
   citeBibtex: z.string().max(2000),
+  aboutTitle: z.string().max(120),
   aboutLede: z.string().max(1000),
   footerCopyright: z.string().max(200),
 });

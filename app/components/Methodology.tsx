@@ -2,19 +2,20 @@ import type { EvalRun } from "@/db/schema";
 
 type Props = {
   run: EvalRun;
+  title: string;
   detectGrader: string;
   exploitGrader: string;
   citeBibtex: string;
 };
 
-export function Methodology({ run, detectGrader, exploitGrader, citeBibtex }: Props) {
+export function Methodology({ run, title, detectGrader, exploitGrader, citeBibtex }: Props) {
   return (
     <section>
       <div className="wrap">
         <div className="section-head">
           <div className="left">
             <div className="section-eyebrow">Methodology</div>
-            <h2>How agents are evaluated</h2>
+            <h2>{title}</h2>
           </div>
         </div>
 

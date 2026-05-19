@@ -10,6 +10,7 @@ import { eq, asc } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { InlineCell } from "./InlineCell";
+import { TextInlineCell } from "./TextInlineCell";
 import { RunActions } from "./RunActions";
 import {
   AddRowPicker,
@@ -29,6 +30,8 @@ import {
   deleteFpAgentRow,
   addFpCategory,
   deleteFpCategory,
+  updateRunMetaText,
+  updateRunMetaNumber,
 } from "@/lib/actions";
 
 export const dynamic = "force-dynamic";
@@ -80,15 +83,61 @@ export default async function RunDetailPage({ params }: PageParams) {
       </div>
 
       <div className="adm-row" style={{ gap: 12, marginTop: 8 }}>
-        <h1 className="adm-h1">{run.version}</h1>
+        <h1 className="adm-h1" style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+          <TextInlineCell
+            initial={run.version}
+            action={updateRunMetaText}
+            actionInput={{ id: run.id, field: "version" }}
+            width={200}
+            placeholder="v0.4"
+          />
+        </h1>
         <span className={`adm-status ${run.isPublic ? "public" : "hidden"}`}>
           {run.isPublic ? "public" : "hidden"}
         </span>
       </div>
       <p className="lede" style={{ marginTop: 8 }}>
         <span className="mono">{run.runId}</span> · created {new Date(run.createdAt).toISOString().slice(0, 10)}
-        {" "}· judge <span className="mono">{run.judgeModel}</span>
+        {" "}· judge{" "}
+        <TextInlineCell
+          initial={run.judgeModel}
+          action={updateRunMetaText}
+          actionInput={{ id: run.id, field: "judgeModel" }}
+          width={420}
+        />
       </p>
+
+      {/* Editable run-meta grid */}
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+          gap: 12,
+          marginTop: 24,
+        }}
+      >
+        {([
+          { label: "Trials per task", field: "trialsPerTask", value: run.trialsPerTask },
+          { label: "Total tasks", field: "totalTasks", value: run.totalTasks },
+          { label: "Positive tasks", field: "positiveTasks", value: run.positiveTasks },
+          { label: "Negative tasks", field: "negativeTasks", value: run.negativeTasks },
+          { label: "Categories", field: "categoriesCount", value: run.categoriesCount },
+        ] as const).map((m) => (
+          <div key={m.field} className="adm-field">
+            <span className="adm-label">{m.label}</span>
+            <div style={{ paddingTop: 4 }}>
+              <InlineCell
+                initial={m.value}
+                fmt={(v) => String(Math.round(v))}
+                action={updateRunMetaNumber}
+                actionInput={{ id: run.id, field: m.field }}
+                width={80}
+                align="left"
+              />
+            </div>
+          </div>
+        ))}
+      </div>
 
       <section className="adm-section">
         <h2 className="adm-h2">Detect mode ({detect.length})</h2>

@@ -6,6 +6,7 @@ import { renderInline } from "@/lib/inline";
 type Props = {
   agents: Agent[];
   detect: DetectResult[];
+  title: string;
   lede: string;
   quote: string;
   body: string;
@@ -31,7 +32,7 @@ function yAt(y: number) {
   return H - PAD.b - k * (H - PAD.t - PAD.b);
 }
 
-export function ParetoChart({ agents, detect, lede, quote, body }: Props) {
+export function ParetoChart({ agents, detect, title, lede, quote, body }: Props) {
   const byId = useMemo(() => new Map(agents.map((a) => [a.id, a])), [agents]);
 
   const points = detect.map((d) => ({
@@ -63,7 +64,7 @@ export function ParetoChart({ agents, detect, lede, quote, body }: Props) {
         <div className="section-head">
           <div className="left">
             <div className="section-eyebrow">Cost vs accuracy</div>
-            <h2>Pareto frontier</h2>
+            <h2>{title}</h2>
             <p className="lede">{lede}</p>
           </div>
         </div>

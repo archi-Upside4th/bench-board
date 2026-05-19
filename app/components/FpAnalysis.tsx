@@ -4,13 +4,14 @@ type Props = {
   agents: Agent[];
   categories: string[];
   rows: { agentId: string; values: { category: string; rate: number }[] }[];
+  title: string;
   lede: string;
 };
 
 const MAX = 1.0;
 const TICKS = [0, 0.2, 0.4, 0.6, 0.8, 1.0];
 
-export function FpAnalysis({ agents, categories, rows, lede }: Props) {
+export function FpAnalysis({ agents, categories, rows, title, lede }: Props) {
   if (rows.length === 0) return null;
   const byId = new Map(agents.map((a) => [a.id, a]));
 
@@ -29,7 +30,7 @@ export function FpAnalysis({ agents, categories, rows, lede }: Props) {
         <div className="section-head">
           <div className="left">
             <div className="section-eyebrow">False positives</div>
-            <h2>FP rate on hardened decoys</h2>
+            <h2>{title}</h2>
             <p className="lede">{lede}</p>
           </div>
         </div>
