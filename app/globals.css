@@ -353,7 +353,9 @@
   @media (prefers-reduced-motion: reduce) {
     .lb-pane { transition: none; }
   }
-  table.lb { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  table.lb { width: 100%; border-collapse: collapse; font-size: 13.5px; table-layout: fixed; }
+  table.lb th:nth-child(1), table.lb td:nth-child(1) { width: 64px; }
+  table.lb th:nth-child(2), table.lb td:nth-child(2) { width: 240px; }
   table.lb thead th {
     text-align: left; font-weight: 500; color: var(--mute);
     font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase;
@@ -376,8 +378,8 @@
   .num-col { font-family: var(--mono); font-variant-numeric: tabular-nums; color: var(--ink); }
   .ci  { color: var(--mute); font-size: 12px; margin-left: 6px; }
   .bar-inline {
-    display: inline-block; vertical-align: middle; margin-left: 12px;
-    width: 140px; height: 4px; background: var(--line-soft); border-radius: 2px; overflow: hidden;
+    display: inline-block; vertical-align: middle; margin-left: 10px;
+    width: 90px; height: 4px; background: var(--line-soft); border-radius: 2px; overflow: hidden;
   }
   .bar-inline > i { display: block; height: 100%; background: var(--accent); }
   .pill {
