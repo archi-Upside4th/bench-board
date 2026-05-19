@@ -9,12 +9,12 @@ import {
 import { eq, asc } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { InlineCell } from "./InlineCell";
 import { TextInlineCell } from "./TextInlineCell";
+import { RunMetaIntCell } from "./RunMetaCell";
 import { RunActions } from "./RunActions";
 import { EditableLeaderboard } from "./EditableLeaderboard";
 import { EditableFpTable } from "./EditableFpTable";
-import { updateRunMetaText, updateRunMetaNumber } from "@/lib/actions";
+import { updateRunMetaText } from "@/lib/actions";
 
 export const dynamic = "force-dynamic";
 
@@ -92,14 +92,7 @@ export default async function RunDetailPage({ params }: PageParams) {
           <div key={m.field} className="adm-field">
             <span className="adm-label">{m.label}</span>
             <div style={{ paddingTop: 4 }}>
-              <InlineCell
-                initial={m.value}
-                fmt={(v) => String(Math.round(v))}
-                action={updateRunMetaNumber}
-                actionInput={{ id: run.id, field: m.field }}
-                width={80}
-                align="left"
-              />
+              <RunMetaIntCell value={m.value} runId={run.id} field={m.field} />
             </div>
           </div>
         ))}
