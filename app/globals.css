@@ -669,8 +669,20 @@
   .adm-wrap { padding: 56px 0 80px; }
   .adm-h1 { font-size: 28px; margin: 0; letter-spacing: -0.02em; }
   .adm-h2 { font-size: 16px; margin: 0; color: var(--ink); letter-spacing: -0.01em; }
-  .adm-section { margin-top: 48px; }
-  .adm-section + .adm-section { border-top: 1px solid var(--line); padding-top: 40px; }
+  /* Reset the public-section treatments (min-height: 100vh, flex centering,
+     snap, border-top, padding) for admin sections — admin should flow normally. */
+  section.adm-section {
+    min-height: auto;
+    display: block;
+    scroll-snap-align: none;
+    padding: 0;
+    border-top: none;
+    margin-top: 48px;
+  }
+  section.adm-section + .adm-section {
+    border-top: 1px solid var(--line);
+    padding-top: 40px;
+  }
   .adm-row { display: flex; align-items: center; gap: 12px; }
   .adm-row.between { justify-content: space-between; }
 
