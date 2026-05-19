@@ -108,7 +108,6 @@ export function Leaderboard({ agents, detect, exploit }: Props) {
                       <th>Precision</th>
                       <th>Recall</th>
                       <th>$/task</th>
-                      <th>Tasks</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -135,7 +134,6 @@ export function Leaderboard({ agents, detect, exploit }: Props) {
                           <td className="num-col">{r.precision.toFixed(2)}</td>
                           <td className="num-col">{r.recall.toFixed(2)}</td>
                           <td className="num-col">${r.costUsdPerTask.toFixed(2)}</td>
-                          <td className="num-col">{r.nTasks}</td>
                         </tr>
                       );
                     })}
@@ -157,7 +155,6 @@ export function Leaderboard({ agents, detect, exploit }: Props) {
                       <th>Partial</th>
                       <th>Fail</th>
                       <th>$/task</th>
-                      <th>Tasks</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -184,7 +181,6 @@ export function Leaderboard({ agents, detect, exploit }: Props) {
                           <td className="num-col cell-warn">{(r.partial * 100).toFixed(0)}%</td>
                           <td className="num-col cell-bad">{(r.fail * 100).toFixed(0)}%</td>
                           <td className="num-col">${r.costUsdPerTask.toFixed(2)}</td>
-                          <td className="num-col">{r.nTasks}</td>
                         </tr>
                       );
                     })}

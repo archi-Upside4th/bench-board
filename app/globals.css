@@ -376,8 +376,8 @@
   .num-col { font-family: var(--mono); font-variant-numeric: tabular-nums; color: var(--ink); }
   .ci  { color: var(--mute); font-size: 12px; margin-left: 6px; }
   .bar-inline {
-    display: inline-block; vertical-align: middle; margin-left: 10px;
-    width: 80px; height: 4px; background: var(--line-soft); border-radius: 2px; overflow: hidden;
+    display: inline-block; vertical-align: middle; margin-left: 12px;
+    width: 140px; height: 4px; background: var(--line-soft); border-radius: 2px; overflow: hidden;
   }
   .bar-inline > i { display: block; height: 100%; background: var(--accent); }
   .pill {
