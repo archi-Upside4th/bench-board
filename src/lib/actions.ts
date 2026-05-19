@@ -682,9 +682,26 @@ export async function importTrialResults(
       .orderBy(desc(evalRuns.createdAt))
       .limit(1);
     if (!latest) {
-      throw new Error("No runs exist. Create one first via /admin/runs/new.");
+      // No runs at all — auto-create a sensible default so admins don't have
+      // to visit /admin/runs/new just to start accumulating.
+      const [created] = await db
+        .insert(evalRuns)
+        .values({
+          version: "v0.1",
+          runId: `default-${Date.now().toString(36)}`,
+          judgeModel: "auto",
+          trialsPerTask: 1,
+          totalTasks: 1,
+          positiveTasks: 1,
+          negativeTasks: 0,
+          categoriesCount: 1,
+          isPublic: true,
+        })
+        .returning({ id: evalRuns.id, runId: evalRuns.runId, version: evalRuns.version });
+      targetRun = created;
+    } else {
+      targetRun = latest;
     }
-    targetRun = latest;
   }
 
   // Parse

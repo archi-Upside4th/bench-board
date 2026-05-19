@@ -43,9 +43,11 @@ export default async function AdminHome() {
             ) : null}
           </p>
         </div>
-        <div className="adm-row">
-          <Link href="/admin/agents" className="ghost-btn">Manage agents</Link>
-          <Link href="/admin/runs/new" className="primary-btn">+ New run</Link>
+        <div className="adm-row" style={{ flexWrap: "wrap", gap: 8 }}>
+          <Link href="/" className="ghost-btn">View site</Link>
+          <Link href="/admin/agents" className="ghost-btn">Agents</Link>
+          <Link href="/admin/runs/new" className="ghost-btn">New run (manual)</Link>
+          <Link href="/admin/runs/import-trials" className="primary-btn">+ Import data</Link>
         </div>
       </div>
 
