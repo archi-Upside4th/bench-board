@@ -468,3 +468,127 @@ export async function updateSiteSettings(input: SiteSettingsInput) {
     });
   bustCaches();
 }
+
+/* ============================ Row CRUD (add/delete) ============================ */
+
+const rowKeySchema = z.object({
+  runId: z.number().int(),
+  agentId: z.string().min(1),
+});
+
+export async function addDetectRow(input: z.input<typeof rowKeySchema>) {
+  await assertAdmin();
+  const { runId, agentId } = rowKeySchema.parse(input);
+  await db
+    .insert(detectResults)
+    .values({
+      runId,
+      agentId,
+      precision: 0,
+      recall: 0,
+      f1: 0,
+      f1CiLow: 0,
+      f1CiHigh: 0,
+      costUsdPerTask: 0,
+      nTasks: 0,
+    })
+    .onConflictDoNothing();
+  bustCaches();
+}
+
+export async function deleteDetectRow(input: z.input<typeof rowKeySchema>) {
+  await assertAdmin();
+  const { runId, agentId } = rowKeySchema.parse(input);
+  await db
+    .delete(detectResults)
+    .where(and(eq(detectResults.runId, runId), eq(detectResults.agentId, agentId)));
+  bustCaches();
+}
+
+export async function addExploitRow(input: z.input<typeof rowKeySchema>) {
+  await assertAdmin();
+  const { runId, agentId } = rowKeySchema.parse(input);
+  await db
+    .insert(exploitResults)
+    .values({
+      runId,
+      agentId,
+      success: 0,
+      partial: 0,
+      fail: 0,
+      costUsdPerTask: 0,
+      nTasks: 0,
+    })
+    .onConflictDoNothing();
+  bustCaches();
+}
+
+export async function deleteExploitRow(input: z.input<typeof rowKeySchema>) {
+  await assertAdmin();
+  const { runId, agentId } = rowKeySchema.parse(input);
+  await db
+    .delete(exploitResults)
+    .where(and(eq(exploitResults.runId, runId), eq(exploitResults.agentId, agentId)));
+  bustCaches();
+}
+
+/* ============================ FP — add/delete row + category ============================ */
+
+const fpCategorySchema = z.object({
+  runId: z.number().int(),
+  category: z.string().min(1).max(120),
+});
+
+export async function addFpCategory(input: z.input<typeof fpCategorySchema>) {
+  await assertAdmin();
+  const { runId, category } = fpCategorySchema.parse(input);
+  // Insert a 0-value row for every agent that already has any fp rate in this run,
+  // OR if none yet, for every agent in DB (so the column appears for everyone).
+  const existingAgents = await db
+    .selectDistinct({ id: fpRates.agentId })
+    .from(fpRates)
+    .where(eq(fpRates.runId, runId));
+  const agentIds = existingAgents.length
+    ? existingAgents.map((r) => r.id)
+    : (await db.select({ id: agents.id }).from(agents)).map((r) => r.id);
+  if (agentIds.length === 0) return;
+  await db
+    .insert(fpRates)
+    .values(agentIds.map((agentId) => ({ runId, agentId, category, rate: 0 })))
+    .onConflictDoNothing();
+  bustCaches();
+}
+
+export async function deleteFpCategory(input: z.input<typeof fpCategorySchema>) {
+  await assertAdmin();
+  const { runId, category } = fpCategorySchema.parse(input);
+  await db
+    .delete(fpRates)
+    .where(and(eq(fpRates.runId, runId), eq(fpRates.category, category)));
+  bustCaches();
+}
+
+export async function addFpAgentRow(input: z.input<typeof rowKeySchema>) {
+  await assertAdmin();
+  const { runId, agentId } = rowKeySchema.parse(input);
+  // Find all categories currently used in this run; add a 0-value row per category.
+  const cats = await db
+    .selectDistinct({ category: fpRates.category })
+    .from(fpRates)
+    .where(eq(fpRates.runId, runId));
+  if (cats.length === 0) return;
+  await db
+    .insert(fpRates)
+    .values(cats.map((c) => ({ runId, agentId, category: c.category, rate: 0 })))
+    .onConflictDoNothing();
+  bustCaches();
+}
+
+export async function deleteFpAgentRow(input: z.input<typeof rowKeySchema>) {
+  await assertAdmin();
+  const { runId, agentId } = rowKeySchema.parse(input);
+  await db
+    .delete(fpRates)
+    .where(and(eq(fpRates.runId, runId), eq(fpRates.agentId, agentId)));
+  bustCaches();
+}
