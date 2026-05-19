@@ -4,7 +4,7 @@ export function About() {
       <div className="wrap">
         <div className="section-head">
           <div className="left">
-            <div className="section-eyebrow">§05 — About</div>
+            <div className="section-eyebrow">About</div>
             <h2>About Bench/Board</h2>
             <p className="lede">
               Bench/Board is an independent benchmark for LLM agents on Solidity

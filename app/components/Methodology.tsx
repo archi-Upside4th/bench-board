@@ -6,7 +6,7 @@ export function Methodology({ run }: { run: EvalRun }) {
       <div className="wrap">
         <div className="section-head">
           <div className="left">
-            <div className="section-eyebrow">§04 — Methodology</div>
+            <div className="section-eyebrow">Methodology</div>
             <h2>How agents are evaluated</h2>
           </div>
         </div>

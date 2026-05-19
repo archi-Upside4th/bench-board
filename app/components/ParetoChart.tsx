@@ -58,7 +58,7 @@ export function ParetoChart({ agents, detect }: Props) {
       <div className="wrap">
         <div className="section-head">
           <div className="left">
-            <div className="section-eyebrow">§02 — Cost vs Accuracy</div>
+            <div className="section-eyebrow">Cost vs accuracy</div>
             <h2>Pareto frontier</h2>
             <p className="lede">
               Each point is one agent. Higher and to the left is better — strong

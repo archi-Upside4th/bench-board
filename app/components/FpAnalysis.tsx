@@ -26,7 +26,7 @@ export function FpAnalysis({ agents, categories, rows }: Props) {
       <div className="wrap">
         <div className="section-head">
           <div className="left">
-            <div className="section-eyebrow">§03 — False positives</div>
+            <div className="section-eyebrow">False positives</div>
             <h2>FP rate on hardened decoys</h2>
             <p className="lede">
               Lower is better. Agents are scored on negative tasks designed to

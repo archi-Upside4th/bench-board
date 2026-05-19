@@ -26,7 +26,7 @@ export function Leaderboard({ agents, detect, exploit }: Props) {
       <div className="wrap">
         <div className="section-head">
           <div className="left">
-            <div className="section-eyebrow">§01 — Main results</div>
+            <div className="section-eyebrow">Main results</div>
             <h2>Agent ranking</h2>
             <p className="lede">
               Switch modes to compare detection F1 vs exploit success rate.
