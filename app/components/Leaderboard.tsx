@@ -1,5 +1,5 @@
 "use client";
-import { useMemo, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { Agent, DetectResult, ExploitResult } from "@/db/schema";
 
 type Props = {
@@ -11,6 +11,31 @@ type Props = {
 export function Leaderboard({ agents, detect, exploit }: Props) {
   const [mode, setMode] = useState<"detect" | "exploit">("detect");
   const byId = useMemo(() => new Map(agents.map((a) => [a.id, a])), [agents]);
+
+  const tabsRef = useRef<HTMLDivElement | null>(null);
+  const detectBtnRef = useRef<HTMLButtonElement | null>(null);
+  const exploitBtnRef = useRef<HTMLButtonElement | null>(null);
+  const [indicator, setIndicator] = useState<{ x: number; w: number; ready: boolean }>({ x: 0, w: 0, ready: false });
+
+  const measure = () => {
+    const target = mode === "detect" ? detectBtnRef.current : exploitBtnRef.current;
+    const host = tabsRef.current;
+    if (!target || !host) return;
+    setIndicator({ x: target.offsetLeft, w: target.offsetWidth, ready: true });
+  };
+
+  // Layout-sync measurement: no flash on initial render, no flash on mode change
+  useLayoutEffect(measure, [mode]);
+
+  // Re-measure on resize and after fonts settle
+  useEffect(() => {
+    const ro = new ResizeObserver(measure);
+    if (tabsRef.current) ro.observe(tabsRef.current);
+    if (detectBtnRef.current) ro.observe(detectBtnRef.current);
+    if (exploitBtnRef.current) ro.observe(exploitBtnRef.current);
+    return () => ro.disconnect();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const detectSorted = useMemo(
     () => [...detect].sort((a, b) => b.f1 - a.f1),
@@ -33,8 +58,18 @@ export function Leaderboard({ agents, detect, exploit }: Props) {
               Confidence intervals from 3 trials × bootstrap.
             </p>
           </div>
-          <div className="tabs" role="tablist">
+          <div className="tabs has-slider" role="tablist" ref={tabsRef}>
+            <span
+              className="tab-slider"
+              aria-hidden="true"
+              style={{
+                transform: `translateX(${indicator.x}px)`,
+                width: indicator.w,
+                opacity: indicator.ready ? 1 : 0,
+              }}
+            />
             <button
+              ref={detectBtnRef}
               className="tab"
               role="tab"
               aria-selected={mode === "detect"}
@@ -43,6 +78,7 @@ export function Leaderboard({ agents, detect, exploit }: Props) {
               Detect <span className="count">{detect.length}</span>
             </button>
             <button
+              ref={exploitBtnRef}
               className="tab"
               role="tab"
               aria-selected={mode === "exploit"}
