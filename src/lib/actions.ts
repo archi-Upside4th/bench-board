@@ -353,6 +353,34 @@ export async function updateDetectCell(input: z.input<typeof detectCellSchema>) 
   bustCaches();
 }
 
+/**
+ * Updates F1 CI low/high so the confidence interval is symmetric around the
+ * row's current F1 with the given half-width. Lets admins edit "±0.05" as a
+ * single value instead of two separate bounds.
+ */
+const detectCiSchema = z.object({
+  runId: z.number().int(),
+  agentId: z.string(),
+  value: z.number().min(0).max(1),
+});
+export async function updateDetectCiHalf(input: z.input<typeof detectCiSchema>) {
+  await assertAdmin();
+  const { runId, agentId, value } = detectCiSchema.parse(input);
+  const [row] = await db
+    .select({ f1: detectResults.f1 })
+    .from(detectResults)
+    .where(and(eq(detectResults.runId, runId), eq(detectResults.agentId, agentId)))
+    .limit(1);
+  if (!row) return;
+  const low = Math.max(0, row.f1 - value);
+  const high = Math.min(1, row.f1 + value);
+  await db
+    .update(detectResults)
+    .set({ f1CiLow: low, f1CiHigh: high })
+    .where(and(eq(detectResults.runId, runId), eq(detectResults.agentId, agentId)));
+  bustCaches();
+}
+
 const exploitCellSchema = z.object({
   runId: z.number().int(),
   agentId: z.string(),
