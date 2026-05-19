@@ -112,7 +112,7 @@
   /* Layout */
   .wrap { width: 100%; max-width: 1240px; margin: 0 auto; padding: 0 32px; }
   section {
-    padding: 64px 0; border-top: 1px solid var(--line);
+    padding: 64px 0;
     scroll-snap-align: start;
     min-height: 100vh;
     display: flex; flex-direction: column; justify-content: center;
