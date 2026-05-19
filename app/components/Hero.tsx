@@ -46,10 +46,10 @@ export function Hero({ stats, eyebrow }: { stats: Stat[]; eyebrow: string }) {
         <div className="section-eyebrow" style={{ color: "var(--accent-hi)" }}>
           {eyebrow}
         </div>
-        <h1 style={{ fontSize: 38, margin: "16px 0 0", letterSpacing: "-0.025em" }}>
+        <h1 style={{ fontSize: 38, margin: "10px 0 0", letterSpacing: "-0.025em" }}>
           Leaderboard
         </h1>
-        <p className="lede" style={{ marginTop: 24, maxWidth: "64ch" }}>
+        <p className="lede" style={{ marginTop: 14, maxWidth: "64ch" }}>
           Bench/Board evaluates LLM agents on smart-contract security tasks across two modes:
           <b style={{ color: "var(--ink)" }}> Detect</b> (vulnerability identification) and
           <b style={{ color: "var(--ink)" }}> Exploit</b> (proof-of-concept exploitation on forked chains).
