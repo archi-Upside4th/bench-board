@@ -7,12 +7,16 @@ import { importTrialResults, type TrialImportSummary } from "@/lib/actions";
 const EXAMPLE = `{"ts": "2026-05-19T10:57:24+00:00", "run_id": "778f7a1023db", "task": "synth-nft-lending-002", "agent": "openrouter-detect", "model": "openai/gpt-oss-120b:free", "mode": "detect", "label": "fail", "score": 0.0, "cost_usd": null, "tp_findings": 0, "fp_findings_estimate": 5, "fn_findings": 1}
 {"ts": "2026-05-19T10:58:11+00:00", "run_id": "778f7a1023db", "task": "synth-flash-loan-001", "agent": "openrouter-detect", "model": "openai/gpt-oss-120b:free", "mode": "detect", "label": "ok", "score": 0.5, "cost_usd": 0.012, "tp_findings": 2, "fp_findings_estimate": 1, "fn_findings": 0}`;
 
-export function ImportTrialsForm() {
+type ExistingRun = { id: number; runId: string; version: string; isPublic: boolean };
+
+export function ImportTrialsForm({ existingRuns = [] }: { existingRuns?: ExistingRun[] }) {
   const router = useRouter();
   const [pending, start] = useTransition();
   const [raw, setRaw] = useState("");
   const [keyField, setKeyField] = useState<"model" | "agent">("model");
   const [version, setVersion] = useState("");
+  // "" = use run_id from JSON; otherwise the id of an existing run
+  const [targetRunId, setTargetRunId] = useState<string>("");
   const [summary, setSummary] = useState<TrialImportSummary | null>(null);
   const [err, setErr] = useState<string | null>(null);
 
@@ -21,11 +25,13 @@ export function ImportTrialsForm() {
     setSummary(null);
     const text = raw.trim();
     if (!text) { setErr("Paste at least one trial record."); return; }
+    const trid = targetRunId ? Number(targetRunId) : undefined;
     start(async () => {
       try {
         const s = await importTrialResults(text, {
           agentKeyField: keyField,
           defaultVersion: version || undefined,
+          targetRunId: trid,
         });
         setSummary(s);
         router.refresh();
@@ -44,6 +50,26 @@ export function ImportTrialsForm() {
       <section className="adm-section">
         <h2 className="adm-h2">Settings</h2>
         <div className="adm-grid cols-2" style={{ marginTop: 16 }}>
+          <div className="adm-field" style={{ gridColumn: "1 / -1" }}>
+            <span className="adm-label">Target run</span>
+            <select
+              className="adm-select"
+              value={targetRunId}
+              onChange={(e) => setTargetRunId(e.target.value)}
+            >
+              <option value="">Use run_id from each record (create new if missing)</option>
+              {existingRuns.map((r) => (
+                <option key={r.id} value={String(r.id)}>
+                  {r.version} {r.isPublic ? "· public" : "· hidden"} · {r.runId}
+                </option>
+              ))}
+            </select>
+            <span className="adm-hint">
+              Pick an existing run to <b>merge into</b> it — every record's <code>run_id</code> is
+              rewritten to that run before grouping. Keeps you from accidentally spawning duplicate runs.
+              Note: per-(run, agent, mode) results are <i>replaced</i> by the latest paste, not accumulated.
+            </span>
+          </div>
           <div className="adm-field">
             <span className="adm-label">Agent identifier source</span>
             <select
@@ -59,16 +85,18 @@ export function ImportTrialsForm() {
             </span>
           </div>
           <div className="adm-field">
-            <span className="adm-label">Default version (only for new runs)</span>
+            <span className="adm-label">Default version (only when creating new run)</span>
             <input
               className="adm-input"
               value={version}
               onChange={(e) => setVersion(e.target.value)}
               placeholder="v0.5 (optional)"
+              disabled={!!targetRunId}
             />
             <span className="adm-hint">
-              If the run_id doesn't exist yet, a new private run is created with this version.
-              Existing runs keep their version.
+              {targetRunId
+                ? "Ignored — you're merging into an existing run."
+                : "If the run_id doesn't exist yet, a new private run is created with this version."}
             </span>
           </div>
         </div>

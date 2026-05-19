@@ -649,11 +649,28 @@ export type TrialImportSummary = {
  */
 export async function importTrialResults(
   rawText: string,
-  opts: { agentKeyField?: "model" | "agent"; defaultVersion?: string } = {}
+  opts: {
+    agentKeyField?: "model" | "agent";
+    defaultVersion?: string;
+    /** If set, all records are routed into this existing run (their JSON run_id is ignored). */
+    targetRunId?: number;
+  } = {}
 ): Promise<TrialImportSummary> {
   await assertAdmin();
   const text = rawText.trim();
   if (!text) throw new Error("Empty input.");
+
+  // If a target run was specified, pre-fetch its runId so we can rewrite every record's run_id.
+  let forcedRunIdString: string | undefined;
+  if (typeof opts.targetRunId === "number") {
+    const [r] = await db
+      .select({ runId: evalRuns.runId })
+      .from(evalRuns)
+      .where(eq(evalRuns.id, opts.targetRunId))
+      .limit(1);
+    if (!r) throw new Error(`Target run #${opts.targetRunId} not found.`);
+    forcedRunIdString = r.runId;
+  }
 
   // Parse
   let records: unknown[] = [];
@@ -699,6 +716,8 @@ export async function importTrialResults(
       continue;
     }
     const t = r.data;
+    // Honor explicit target run by rewriting the per-record run_id before grouping.
+    if (forcedRunIdString) t.run_id = forcedRunIdString;
     if (!t.run_id) { summary.trialsSkipped++; summary.warnings.push("Skipped record without run_id"); continue; }
     if (!t.mode)   { summary.trialsSkipped++; summary.warnings.push(`Skipped record (run_id=${t.run_id}) without mode`); continue; }
     const rawKey = (agentKeyField === "model" ? t.model : t.agent) ?? t.agent ?? t.model;

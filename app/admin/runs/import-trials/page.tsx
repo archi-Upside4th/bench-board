@@ -1,8 +1,17 @@
+import { db } from "@/db";
+import { evalRuns } from "@/db/schema";
+import { desc } from "drizzle-orm";
 import { ImportTrialsForm } from "./ImportTrialsForm";
 
 export const dynamic = "force-dynamic";
 
-export default function ImportTrialsPage() {
+export default async function ImportTrialsPage() {
+  const runs = await db
+    .select({ id: evalRuns.id, runId: evalRuns.runId, version: evalRuns.version, isPublic: evalRuns.isPublic })
+    .from(evalRuns)
+    .orderBy(desc(evalRuns.createdAt))
+    .limit(50);
+
   return (
     <div className="wrap adm-wrap" style={{ maxWidth: 1100 }}>
       <h1 className="adm-h1">Import per-trial results</h1>
@@ -12,7 +21,7 @@ export default function ImportTrialsPage() {
         chosen agent key, then aggregated into precision/recall/F1 (detect) or
         success/partial/fail rates (exploit) per agent.
       </p>
-      <ImportTrialsForm />
+      <ImportTrialsForm existingRuns={runs} />
     </div>
   );
 }
