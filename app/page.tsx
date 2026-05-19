@@ -79,6 +79,13 @@ export default async function Page() {
           title={s.leaderboardTitle}
           lede={s.leaderboardLede}
         />
+        <FpAnalysis
+          agents={agents}
+          categories={fpCategories}
+          rows={fpRows}
+          title={s.fpTitle}
+          lede={s.fpLede}
+        />
         <ParetoChart
           agents={agents}
           detect={detect}
@@ -86,13 +93,6 @@ export default async function Page() {
           lede={s.paretoLede}
           quote={s.paretoQuote}
           body={s.paretoBody}
-        />
-        <FpAnalysis
-          agents={agents}
-          categories={fpCategories}
-          rows={fpRows}
-          title={s.fpTitle}
-          lede={s.fpLede}
         />
         <Methodology
           run={run}
