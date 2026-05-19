@@ -336,6 +336,12 @@
       var(--grad-border);
     background-origin: border-box;
     background-clip: padding-box, border-box;
+    view-transition-name: leaderboard-card;
+  }
+  ::view-transition-old(leaderboard-card),
+  ::view-transition-new(leaderboard-card) {
+    animation-duration: 360ms;
+    animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
   }
   table.lb { width: 100%; border-collapse: collapse; font-size: 13.5px; }
   table.lb thead th {

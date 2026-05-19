@@ -1,6 +1,11 @@
 "use client";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { flushSync } from "react-dom";
 import type { Agent, DetectResult, ExploitResult } from "@/db/schema";
+
+type DocWithVT = Document & {
+  startViewTransition?: (cb: () => void) => { finished: Promise<void> };
+};
 
 type Props = {
   agents: Agent[];
@@ -36,6 +41,21 @@ export function Leaderboard({ agents, detect, exploit }: Props) {
     return () => ro.disconnect();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  function switchMode(next: "detect" | "exploit") {
+    if (next === mode) return;
+    const doc = typeof document !== "undefined" ? (document as DocWithVT) : null;
+    const reduced =
+      typeof window !== "undefined" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (doc?.startViewTransition && !reduced) {
+      doc.startViewTransition(() => {
+        flushSync(() => setMode(next));
+      });
+    } else {
+      setMode(next);
+    }
+  }
 
   const detectSorted = useMemo(
     () => [...detect].sort((a, b) => b.f1 - a.f1),
@@ -73,7 +93,7 @@ export function Leaderboard({ agents, detect, exploit }: Props) {
               className="tab"
               role="tab"
               aria-selected={mode === "detect"}
-              onClick={() => setMode("detect")}
+              onClick={() => switchMode("detect")}
             >
               Detect <span className="count">{detect.length}</span>
             </button>
@@ -82,7 +102,7 @@ export function Leaderboard({ agents, detect, exploit }: Props) {
               className="tab"
               role="tab"
               aria-selected={mode === "exploit"}
-              onClick={() => setMode("exploit")}
+              onClick={() => switchMode("exploit")}
             >
               Exploit <span className="count">{exploit.length}</span>
             </button>
