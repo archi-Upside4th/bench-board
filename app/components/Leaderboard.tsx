@@ -127,6 +127,9 @@ export function Leaderboard({ agents, detect, exploit }: Props) {
                           <td className="num-col">
                             {r.f1.toFixed(2)}
                             <span className="ci">±{ci}</span>
+                            <span className="bar-inline">
+                              <i style={{ width: `${Math.round(r.f1 * 100)}%` }} />
+                            </span>
                           </td>
                           <td className="num-col">{r.precision.toFixed(2)}</td>
                           <td className="num-col">{r.recall.toFixed(2)}</td>
