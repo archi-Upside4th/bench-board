@@ -17,7 +17,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Bench/Board — Smart Contract Security Benchmark for LLM Agents",
   description:
-    "Bench/Board evaluates LLM agents on smart-contract security tasks: vulnerability detection and exploit execution.",
+    "Bench-Clear evaluates LLM agents on smart-contract security tasks: vulnerability detection and exploit execution.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
