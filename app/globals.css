@@ -546,18 +546,19 @@
   .hm > div:nth-child(8n) { border-right: none; }
 
   /* FP horizontal bars */
-  .fp-row { display: grid; grid-template-columns: 220px 1fr 64px; gap: 12px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--line-soft); }
+  .fp-row { display: grid; grid-template-columns: 260px 1fr 80px; gap: 16px; align-items: center; padding: 16px 0; border-bottom: 1px solid var(--line-soft); }
   .fp-row:last-child { border-bottom: none; }
-  .fp-cat { font-size: 12.5px; color: var(--ink); display: flex; align-items: center; gap: 8px; }
-  .fp-cat .ix { color: var(--mute-2); font-family: var(--mono); font-size: 11px; }
-  .fp-track { position: relative; height: 22px; background: rgba(15,15,20,0.5); border: 1px solid var(--line-soft); border-radius: 6px; overflow: hidden; }
+  .fp-cat { font-size: 14px; color: var(--ink); display: flex; align-items: center; gap: 10px; }
+  .fp-cat .ix { color: var(--mute-2); font-family: var(--mono); font-size: 12px; }
+  .fp-cat .agent-name { font-size: 14px; }
+  .fp-track { position: relative; height: 44px; background: rgba(15,15,20,0.5); border: 1px solid var(--line-soft); border-radius: 8px; overflow: hidden; }
   .fp-track .gridv {
     position: absolute; top: 0; bottom: 0; width: 1px; background: var(--line-soft);
   }
   .fp-bar { position: absolute; top: 1px; bottom: 1px; border-radius: 4px; opacity: 0.85; }
   .fp-bar:hover { opacity: 1; outline: 1px solid var(--ink); }
-  .fp-mean { font-family: var(--mono); font-size: 12px; color: var(--mute); text-align: right; }
-  .fp-axis { display: grid; grid-template-columns: 220px 1fr 64px; gap: 12px; padding-bottom: 8px; }
+  .fp-mean { font-family: var(--mono); font-size: 15px; color: var(--ink); text-align: right; font-weight: 500; }
+  .fp-axis { display: grid; grid-template-columns: 260px 1fr 80px; gap: 16px; padding-bottom: 10px; }
   .fp-axis .axis-ticks { position: relative; height: 14px; }
   .fp-axis .axis-ticks span {
     position: absolute; top: 0; transform: translateX(-50%);
