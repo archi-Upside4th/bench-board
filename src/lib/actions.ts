@@ -7,6 +7,7 @@ import {
   detectResults,
   exploitResults,
   fpRates,
+  siteSettings,
 } from "@/db/schema";
 import { auth, isAdmin } from "@/auth";
 import { revalidatePath } from "next/cache";
@@ -430,5 +431,40 @@ export async function setRunPublic(runId: number, isPublic: boolean) {
 export async function deleteRun(runId: number) {
   await assertAdmin();
   await db.delete(evalRuns).where(eq(evalRuns.id, runId));
+  bustCaches();
+}
+
+/* ============================ Site settings ============================ */
+
+const siteSettingsSchema = z.object({
+  siteSubtitle: z.string().max(200),
+  githubUrl: z.string().url().or(z.literal("")),
+  heroEyebrow: z.string().max(80),
+  heroTitle: z.string().max(80),
+  heroDescription: z.string().max(800),
+  leaderboardLede: z.string().max(800),
+  paretoLede: z.string().max(800),
+  paretoQuote: z.string().max(400),
+  paretoBody: z.string().max(800),
+  fpLede: z.string().max(800),
+  methodologyDetectGrader: z.string().max(400),
+  methodologyExploitGrader: z.string().max(400),
+  citeBibtex: z.string().max(2000),
+  aboutLede: z.string().max(1000),
+  footerCopyright: z.string().max(200),
+});
+
+export type SiteSettingsInput = z.infer<typeof siteSettingsSchema>;
+
+export async function updateSiteSettings(input: SiteSettingsInput) {
+  await assertAdmin();
+  const parsed = siteSettingsSchema.parse(input);
+  await db
+    .insert(siteSettings)
+    .values({ id: 1, ...parsed, updatedAt: new Date() })
+    .onConflictDoUpdate({
+      target: siteSettings.id,
+      set: { ...parsed, updatedAt: new Date() },
+    });
   bustCaches();
 }

@@ -6,9 +6,10 @@ type Props = {
   agents: Agent[];
   detect: DetectResult[];
   exploit: ExploitResult[];
+  lede: string;
 };
 
-export function Leaderboard({ agents, detect, exploit }: Props) {
+export function Leaderboard({ agents, detect, exploit, lede }: Props) {
   const [mode, setMode] = useState<"detect" | "exploit">("detect");
   const byId = useMemo(() => new Map(agents.map((a) => [a.id, a])), [agents]);
 
@@ -58,10 +59,7 @@ export function Leaderboard({ agents, detect, exploit }: Props) {
           <div className="left">
             <div className="section-eyebrow">Main results</div>
             <h2>Agent ranking</h2>
-            <p className="lede">
-              Switch modes to compare detection F1 vs exploit success rate.
-              Confidence intervals from 3 trials × bootstrap.
-            </p>
+            <p className="lede">{lede}</p>
           </div>
           <div className="tabs has-slider" role="tablist" ref={tabsRef}>
             <span

@@ -1,9 +1,17 @@
 "use client";
 import { useEffect, useRef } from "react";
+import { renderInline } from "@/lib/inline";
 
 type Stat = { k: string; v: number; vSmall?: string; corner?: string; x: string };
 
-export function Hero({ stats, eyebrow }: { stats: Stat[]; eyebrow: string }) {
+type Props = {
+  stats: Stat[];
+  eyebrow: string;
+  title: string;
+  description: string;
+};
+
+export function Hero({ stats, eyebrow, title, description }: Props) {
   const heroRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -47,12 +55,10 @@ export function Hero({ stats, eyebrow }: { stats: Stat[]; eyebrow: string }) {
           {eyebrow}
         </div>
         <h1 style={{ fontSize: 56, margin: "10px 0 0", letterSpacing: "-0.03em" }}>
-          Leaderboard
+          {title}
         </h1>
         <p className="lede" style={{ marginTop: 14, maxWidth: "64ch" }}>
-          Bench/Board evaluates LLM agents on smart-contract security tasks across two modes:
-          <b style={{ color: "var(--ink)" }}> Detect</b> (vulnerability identification) and
-          <b style={{ color: "var(--ink)" }}> Exploit</b> (proof-of-concept exploitation on forked chains).
+          {renderInline(description)}
         </p>
 
         <div className="hero">

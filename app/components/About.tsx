@@ -1,4 +1,4 @@
-export function About() {
+export function About({ lede }: { lede: string }) {
   return (
     <section>
       <div className="wrap">
@@ -6,11 +6,7 @@ export function About() {
           <div className="left">
             <div className="section-eyebrow">About</div>
             <h2>About Bench/Board</h2>
-            <p className="lede">
-              Bench/Board is an independent benchmark for LLM agents on Solidity
-              security tasks, drawing on the data structure of EVMBench and the
-              cost-aware framing of Aider's leaderboards.
-            </p>
+            <p className="lede">{lede}</p>
           </div>
         </div>
       </div>

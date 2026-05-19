@@ -1,10 +1,14 @@
 "use client";
 import { useMemo } from "react";
 import type { Agent, DetectResult } from "@/db/schema";
+import { renderInline } from "@/lib/inline";
 
 type Props = {
   agents: Agent[];
   detect: DetectResult[];
+  lede: string;
+  quote: string;
+  body: string;
 };
 
 const W = 520;
@@ -27,7 +31,7 @@ function yAt(y: number) {
   return H - PAD.b - k * (H - PAD.t - PAD.b);
 }
 
-export function ParetoChart({ agents, detect }: Props) {
+export function ParetoChart({ agents, detect, lede, quote, body }: Props) {
   const byId = useMemo(() => new Map(agents.map((a) => [a.id, a])), [agents]);
 
   const points = detect.map((d) => ({
@@ -60,10 +64,7 @@ export function ParetoChart({ agents, detect }: Props) {
           <div className="left">
             <div className="section-eyebrow">Cost vs accuracy</div>
             <h2>Pareto frontier</h2>
-            <p className="lede">
-              Each point is one agent. Higher and to the left is better — strong
-              detection F1 at low per-task cost.
-            </p>
+            <p className="lede">{lede}</p>
           </div>
         </div>
 
@@ -136,14 +137,8 @@ export function ParetoChart({ agents, detect }: Props) {
           </div>
 
           <div className="commentary">
-            <div className="quote">
-              The frontier illustrates a clean cost–accuracy trade-off:
-              <em> top-tier F1 doesn't require top-tier spend</em>.
-            </div>
-            <p>
-              The lowest-cost frontier agent achieves competitive F1 at a fraction of the cost of the
-              top model — a meaningful trade if budget-sensitive deployment matters.
-            </p>
+            <div className="quote">{renderInline(quote)}</div>
+            <p>{renderInline(body)}</p>
           </div>
         </div>
       </div>

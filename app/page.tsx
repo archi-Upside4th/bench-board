@@ -1,4 +1,5 @@
 import { getLatestRun } from "@/lib/leaderboard";
+import { getSiteSettings } from "@/lib/settings";
 import { Header } from "./components/Header";
 import { Hero } from "./components/Hero";
 import { Leaderboard } from "./components/Leaderboard";
@@ -10,17 +11,17 @@ import { About } from "./components/About";
 export const dynamic = "force-dynamic";
 
 export default async function Page() {
-  const data = await getLatestRun();
+  const [data, s] = await Promise.all([getLatestRun(), getSiteSettings()]);
 
   if (!data) {
     return (
       <>
-        <Header datasetVersion="—" />
+        <Header datasetVersion="—" subtitle={s.siteSubtitle} githubUrl={s.githubUrl} />
         <main>
           <section className="first">
             <div className="wrap">
               <div className="section-eyebrow" style={{ color: "var(--accent-hi)" }}>
-                Team benchclearing
+                {s.heroEyebrow}
               </div>
               <h1 style={{ fontSize: 38, margin: "16px 0 0" }}>No evaluation runs yet</h1>
               <p className="lede" style={{ marginTop: 24 }}>
@@ -37,10 +38,12 @@ export default async function Page() {
 
   return (
     <>
-      <Header datasetVersion={run.version} />
+      <Header datasetVersion={run.version} subtitle={s.siteSubtitle} githubUrl={s.githubUrl} />
       <main>
         <Hero
-          eyebrow="Team benchclearing"
+          eyebrow={s.heroEyebrow}
+          title={s.heroTitle}
+          description={s.heroDescription}
           stats={[
             { k: "Total tasks", v: run.totalTasks, x: `dataset ${run.version}` },
             {
@@ -53,14 +56,19 @@ export default async function Page() {
             { k: "Trials per task", v: run.trialsPerTask, x: run.judgeModel },
           ]}
         />
-        <Leaderboard agents={agents} detect={detect} exploit={exploit} />
-        <ParetoChart agents={agents} detect={detect} />
-        <FpAnalysis agents={agents} categories={fpCategories} rows={fpRows} />
-        <Methodology run={run} />
-        <About />
+        <Leaderboard agents={agents} detect={detect} exploit={exploit} lede={s.leaderboardLede} />
+        <ParetoChart agents={agents} detect={detect} lede={s.paretoLede} quote={s.paretoQuote} body={s.paretoBody} />
+        <FpAnalysis agents={agents} categories={fpCategories} rows={fpRows} lede={s.fpLede} />
+        <Methodology
+          run={run}
+          detectGrader={s.methodologyDetectGrader}
+          exploitGrader={s.methodologyExploitGrader}
+          citeBibtex={s.citeBibtex}
+        />
+        <About lede={s.aboutLede} />
         <footer className="foot">
           <div className="wrap row">
-            <span>© Team Benchclearing</span>
+            <span>{s.footerCopyright}</span>
             <span className="runid">dataset {run.version}</span>
           </div>
         </footer>

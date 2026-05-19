@@ -1,6 +1,10 @@
-type Props = { datasetVersion: string };
+type Props = {
+  datasetVersion: string;
+  subtitle: string;
+  githubUrl: string;
+};
 
-export function Header({ datasetVersion }: Props) {
+export function Header({ datasetVersion, subtitle, githubUrl }: Props) {
   return (
     <header className="site">
       <div className="site-inner">
@@ -26,7 +30,7 @@ export function Header({ datasetVersion }: Props) {
               <span className="w-clear">Board</span>
             </span>
           </a>
-          <span className="sub">Smart Contract Security Benchmark for LLM Agents</span>
+          <span className="sub">{subtitle}</span>
         </div>
         <span className="header-spacer" />
         <span className="meta-pill" title="Dataset version">
@@ -35,9 +39,11 @@ export function Header({ datasetVersion }: Props) {
         <span className="meta-pill" title="Last updated">
           updated <b>{new Date().toISOString().slice(0, 10)}</b>
         </span>
-        <a className="ghost-btn" href="https://github.com/" target="_blank" rel="noreferrer">
-          View on GitHub
-        </a>
+        {githubUrl ? (
+          <a className="ghost-btn" href={githubUrl} target="_blank" rel="noreferrer">
+            View on GitHub
+          </a>
+        ) : null}
       </div>
     </header>
   );

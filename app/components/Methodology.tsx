@@ -1,6 +1,13 @@
 import type { EvalRun } from "@/db/schema";
 
-export function Methodology({ run }: { run: EvalRun }) {
+type Props = {
+  run: EvalRun;
+  detectGrader: string;
+  exploitGrader: string;
+  citeBibtex: string;
+};
+
+export function Methodology({ run, detectGrader, exploitGrader, citeBibtex }: Props) {
   return (
     <section>
       <div className="wrap">
@@ -27,13 +34,11 @@ export function Methodology({ run }: { run: EvalRun }) {
             </div>
             <div className="method-row">
               <div className="k">Detect grader</div>
-              <div className="v">Hybrid: deterministic claim-match + LLM judge.</div>
+              <div className="v">{detectGrader}</div>
             </div>
             <div className="method-row">
               <div className="k">Exploit grader</div>
-              <div className="v">
-                Deterministic <code>forge_script</code> on a forked Anvil instance.
-              </div>
+              <div className="v">{exploitGrader}</div>
             </div>
             <div className="method-row">
               <div className="k">Total tasks</div>
@@ -42,12 +47,7 @@ export function Methodology({ run }: { run: EvalRun }) {
               </div>
             </div>
           </div>
-          <pre className="cite-card">{`@misc{benchboard2026,
-  title  = {Bench/Board: Smart Contract Security Benchmark for LLM Agents},
-  author = {Bench/Board contributors},
-  year   = {2026},
-  note   = {Dataset version ${run.version}}
-}`}</pre>
+          <pre className="cite-card">{citeBibtex}</pre>
         </div>
       </div>
     </section>
