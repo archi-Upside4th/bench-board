@@ -36,7 +36,7 @@ export function FpAnalysis({ agents, categories, rows }: Props) {
           </div>
         </div>
 
-        <div className="chart-card">
+        <div className="lb-card fp-card">
           <div className="fp-head">
             <div className="fp-head-cell">Agent</div>
             <div className="fp-head-cell">FP rate</div>
