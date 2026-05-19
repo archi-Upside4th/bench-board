@@ -360,7 +360,8 @@
   table.lb th:nth-child(3), table.lb td:nth-child(3) { width: 110px; }
   /* F1 (or Outcome in Exploit): wide enough for the inline bar / seg bar */
   table.lb th:nth-child(4), table.lb td:nth-child(4) { width: 260px; }
-  /* Precision / Recall / $/task auto-divide remaining space equally */
+  /* Last column ($/task): shift right via text alignment so it sits flush with table edge */
+  table.lb th:last-child, table.lb td:last-child { text-align: right; padding-right: 24px; }
   table.lb thead th {
     text-align: left; font-weight: 500; color: var(--mute);
     font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase;
