@@ -37,6 +37,11 @@ export function FpAnalysis({ agents, categories, rows }: Props) {
         </div>
 
         <div className="chart-card">
+          <div className="fp-head">
+            <div className="fp-head-cell">Agent</div>
+            <div className="fp-head-cell">FP rate</div>
+            <div className="fp-head-cell right">Mean</div>
+          </div>
           <div className="fp-axis">
             <div />
             <div className="axis-ticks">
@@ -46,9 +51,7 @@ export function FpAnalysis({ agents, categories, rows }: Props) {
                 </span>
               ))}
             </div>
-            <div style={{ fontFamily: "var(--mono)", fontSize: 10.5, color: "var(--mute)", textAlign: "right" }}>
-              mean
-            </div>
+            <div />
           </div>
           <div>
             {agentMeans.map(({ agentId, mean }, ai) => {

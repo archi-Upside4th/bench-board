@@ -558,6 +558,15 @@
   .fp-bar { position: absolute; top: 1px; bottom: 1px; border-radius: 4px; opacity: 0.85; }
   .fp-bar:hover { opacity: 1; outline: 1px solid var(--ink); }
   .fp-mean { font-family: var(--mono); font-size: 15px; color: var(--ink); text-align: right; font-weight: 500; }
+  .fp-head {
+    display: grid; grid-template-columns: 260px 1fr 80px; gap: 16px;
+    padding: 12px 0 10px; border-bottom: 1px solid var(--line); margin-bottom: 8px;
+  }
+  .fp-head-cell {
+    font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--mute); font-weight: 500;
+  }
+  .fp-head-cell.right { text-align: right; }
   .fp-axis { display: grid; grid-template-columns: 260px 1fr 80px; gap: 16px; padding-bottom: 10px; }
   .fp-axis .axis-ticks { position: relative; height: 14px; }
   .fp-axis .axis-ticks span {
