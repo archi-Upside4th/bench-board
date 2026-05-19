@@ -22,7 +22,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="kr">
       <body className={`${geist.variable} ${geistMono.variable}`}>
         <div className="aurora-bg" aria-hidden="true" />
         {children}

@@ -10,27 +10,17 @@ const MAX = 0.5;
 const TICKS = [0, 0.1, 0.2, 0.3, 0.4, 0.5];
 
 export function FpAnalysis({ agents, categories, rows }: Props) {
-  if (categories.length === 0 || rows.length === 0) return null;
+  if (rows.length === 0) return null;
   const byId = new Map(agents.map((a) => [a.id, a]));
 
-  // Index per-agent rates by category for fast lookup
-  const ratesByAgent = new Map<string, Map<string, number>>();
-  for (const r of rows) {
-    const map = new Map<string, number>();
-    for (const v of r.values) map.set(v.category, v.rate);
-    ratesByAgent.set(r.agentId, map);
-  }
-
-  // Sort agents by their mean FP rate (best — lowest — first)
+  // Compute one mean per agent across all categories
   const agentMeans = rows
     .map((r) => {
-      const vals = categories
-        .map((c) => ratesByAgent.get(r.agentId)?.get(c))
-        .filter((v): v is number => typeof v === "number");
+      const vals = r.values.map((v) => v.rate);
       const mean = vals.length ? vals.reduce((s, v) => s + v, 0) / vals.length : 0;
       return { agentId: r.agentId, mean };
     })
-    .sort((a, b) => a.mean - b.mean);
+    .sort((a, b) => a.mean - b.mean); // best (lowest FP) first
 
   return (
     <section>
@@ -40,8 +30,8 @@ export function FpAnalysis({ agents, categories, rows }: Props) {
             <div className="section-eyebrow">False positives</div>
             <h2>FP rate on hardened decoys</h2>
             <p className="lede">
-              Lower is better. Each row is one agent; bars within a row are the
-              {" "}{categories.length} negative categories. Hover for the category name.
+              Lower is better. Mean false-positive rate per agent across
+              {" "}{categories.length} negative categories.
             </p>
           </div>
         </div>
@@ -64,7 +54,7 @@ export function FpAnalysis({ agents, categories, rows }: Props) {
             {agentMeans.map(({ agentId, mean }, ai) => {
               const a = byId.get(agentId);
               const color = a?.color ?? "#888";
-              const ratesMap = ratesByAgent.get(agentId) ?? new Map();
+              const w = Math.min(100, (mean / MAX) * 100);
               return (
                 <div className="fp-row" key={agentId}>
                   <div className="fp-cat">
@@ -76,31 +66,18 @@ export function FpAnalysis({ agents, categories, rows }: Props) {
                     {TICKS.map((v) => (
                       <span key={v} className="gridv" style={{ left: `${(v / MAX) * 100}%` }} />
                     ))}
-                    {categories.map((cat, ci) => {
-                      const rate = ratesMap.get(cat);
-                      if (typeof rate !== "number") return null;
-                      const top = (ci / categories.length) * 22;
-                      const h = 22 / categories.length - 0.5;
-                      const w = (rate / MAX) * 100;
-                      // Subtle opacity gradient across categories so individual
-                      // bars are still distinguishable within an all-same-color row.
-                      const op = 0.55 + (ci / Math.max(1, categories.length - 1)) * 0.45;
-                      return (
-                        <span
-                          key={cat}
-                          className="fp-bar"
-                          title={`${cat} — ${rate.toFixed(2)}`}
-                          style={{
-                            left: 0,
-                            top: `${top + 0.25}px`,
-                            height: `${h}px`,
-                            width: `${w}%`,
-                            background: color,
-                            opacity: op,
-                          }}
-                        />
-                      );
-                    })}
+                    <span
+                      className="fp-bar"
+                      style={{
+                        left: 0,
+                        top: 2,
+                        bottom: 2,
+                        height: "auto",
+                        width: `${w}%`,
+                        background: color,
+                        opacity: 0.9,
+                      }}
+                    />
                   </div>
                   <div className="fp-mean">{mean.toFixed(2)}</div>
                 </div>
