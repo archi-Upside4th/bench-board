@@ -99,8 +99,7 @@ export default async function RunDetailPage({ params }: PageParams) {
               <tbody>
                 {detectSorted.map((r, i) => {
                   const a = agentById.get(r.agentId);
-                  const save = (field: "precision" | "recall" | "f1" | "f1CiLow" | "f1CiHigh" | "costUsdPerTask" | "nTasks") =>
-                    (v: number) => updateDetectCell({ runId, agentId: r.agentId, field, value: v });
+                  const base = { runId, agentId: r.agentId } as const;
                   return (
                     <tr key={r.agentId}>
                       <td className="rank-col">{String(i + 1).padStart(2, "0")}</td>
@@ -110,13 +109,13 @@ export default async function RunDetailPage({ params }: PageParams) {
                           <span className="agent-name">{r.agentId}</span>
                         </div>
                       </td>
-                      <td className="num"><InlineCell initial={r.precision} fmt={fmt2} onSave={save("precision")} /></td>
-                      <td className="num"><InlineCell initial={r.recall} fmt={fmt2} onSave={save("recall")} /></td>
-                      <td className="num"><InlineCell initial={r.f1} fmt={fmt2} onSave={save("f1")} /></td>
-                      <td className="num"><InlineCell initial={r.f1CiLow} fmt={fmt2} onSave={save("f1CiLow")} /></td>
-                      <td className="num"><InlineCell initial={r.f1CiHigh} fmt={fmt2} onSave={save("f1CiHigh")} /></td>
-                      <td className="num"><InlineCell initial={r.costUsdPerTask} fmt={fmtMoney} parse={(s) => Number(s.replace("$", ""))} onSave={save("costUsdPerTask")} /></td>
-                      <td className="num"><InlineCell initial={r.nTasks} fmt={fmt0} onSave={save("nTasks")} /></td>
+                      <td className="num"><InlineCell initial={r.precision} fmt={fmt2} action={updateDetectCell} actionInput={{ ...base, field: "precision" }} /></td>
+                      <td className="num"><InlineCell initial={r.recall} fmt={fmt2} action={updateDetectCell} actionInput={{ ...base, field: "recall" }} /></td>
+                      <td className="num"><InlineCell initial={r.f1} fmt={fmt2} action={updateDetectCell} actionInput={{ ...base, field: "f1" }} /></td>
+                      <td className="num"><InlineCell initial={r.f1CiLow} fmt={fmt2} action={updateDetectCell} actionInput={{ ...base, field: "f1CiLow" }} /></td>
+                      <td className="num"><InlineCell initial={r.f1CiHigh} fmt={fmt2} action={updateDetectCell} actionInput={{ ...base, field: "f1CiHigh" }} /></td>
+                      <td className="num"><InlineCell initial={r.costUsdPerTask} fmt={fmtMoney} parse={(s) => Number(s.replace("$", ""))} action={updateDetectCell} actionInput={{ ...base, field: "costUsdPerTask" }} /></td>
+                      <td className="num"><InlineCell initial={r.nTasks} fmt={fmt0} action={updateDetectCell} actionInput={{ ...base, field: "nTasks" }} /></td>
                     </tr>
                   );
                 })}
@@ -147,8 +146,7 @@ export default async function RunDetailPage({ params }: PageParams) {
               <tbody>
                 {exploitSorted.map((r, i) => {
                   const a = agentById.get(r.agentId);
-                  const save = (field: "success" | "partial" | "fail" | "costUsdPerTask" | "nTasks") =>
-                    (v: number) => updateExploitCell({ runId, agentId: r.agentId, field, value: v });
+                  const base = { runId, agentId: r.agentId } as const;
                   return (
                     <tr key={r.agentId}>
                       <td className="rank-col">{String(i + 1).padStart(2, "0")}</td>
@@ -158,11 +156,11 @@ export default async function RunDetailPage({ params }: PageParams) {
                           <span className="agent-name">{r.agentId}</span>
                         </div>
                       </td>
-                      <td className="num"><InlineCell initial={r.success} fmt={fmt2} onSave={save("success")} /></td>
-                      <td className="num"><InlineCell initial={r.partial} fmt={fmt2} onSave={save("partial")} /></td>
-                      <td className="num"><InlineCell initial={r.fail} fmt={fmt2} onSave={save("fail")} /></td>
-                      <td className="num"><InlineCell initial={r.costUsdPerTask} fmt={fmtMoney} parse={(s) => Number(s.replace("$", ""))} onSave={save("costUsdPerTask")} /></td>
-                      <td className="num"><InlineCell initial={r.nTasks} fmt={fmt0} onSave={save("nTasks")} /></td>
+                      <td className="num"><InlineCell initial={r.success} fmt={fmt2} action={updateExploitCell} actionInput={{ ...base, field: "success" }} /></td>
+                      <td className="num"><InlineCell initial={r.partial} fmt={fmt2} action={updateExploitCell} actionInput={{ ...base, field: "partial" }} /></td>
+                      <td className="num"><InlineCell initial={r.fail} fmt={fmt2} action={updateExploitCell} actionInput={{ ...base, field: "fail" }} /></td>
+                      <td className="num"><InlineCell initial={r.costUsdPerTask} fmt={fmtMoney} parse={(s) => Number(s.replace("$", ""))} action={updateExploitCell} actionInput={{ ...base, field: "costUsdPerTask" }} /></td>
+                      <td className="num"><InlineCell initial={r.nTasks} fmt={fmt0} action={updateExploitCell} actionInput={{ ...base, field: "nTasks" }} /></td>
                     </tr>
                   );
                 })}
@@ -209,7 +207,8 @@ export default async function RunDetailPage({ params }: PageParams) {
                               initial={v}
                               fmt={fmt2}
                               validate={(x) => (x < 0 || x > 1 ? "0–1 only" : null)}
-                              onSave={(x) => updateFpCell({ runId, agentId, category: c, rate: x })}
+                              action={updateFpCell}
+                              actionInput={{ runId, agentId, category: c }}
                               width={64}
                             />
                           </td>

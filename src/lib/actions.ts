@@ -373,15 +373,15 @@ const fpCellSchema = z.object({
   runId: z.number().int(),
   agentId: z.string(),
   category: z.string(),
-  rate: z.number().min(0).max(1),
+  value: z.number().min(0).max(1),
 });
 
 export async function updateFpCell(input: z.input<typeof fpCellSchema>) {
   await assertAdmin();
-  const { runId, agentId, category, rate } = fpCellSchema.parse(input);
+  const { runId, agentId, category, value } = fpCellSchema.parse(input);
   await db
     .update(fpRates)
-    .set({ rate })
+    .set({ rate: value })
     .where(
       and(
         eq(fpRates.runId, runId),

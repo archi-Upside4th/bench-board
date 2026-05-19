@@ -7,7 +7,16 @@ type Props = {
   fmt?: (v: number) => string;
   parse?: (s: string) => number;
   validate?: (v: number) => string | null;
-  onSave: (v: number) => Promise<void>;
+  /**
+   * Server action invoked as `action({ ...actionInput, value })`.
+   * Must be a server action (declared in a "use server" module) so it can
+   * cross the Server→Client component boundary. Typed loosely so any
+   * action shape that accepts a `value` field works.
+   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  action: (input: any) => Promise<void>;
+  /** Plain serializable identifiers (runId, agentId, field, etc.) */
+  actionInput: Record<string, unknown>;
   width?: number;
   align?: "left" | "right";
 };
@@ -17,7 +26,8 @@ export function InlineCell({
   fmt = (v) => String(v),
   parse = (s) => Number(s),
   validate,
-  onSave,
+  action,
+  actionInput,
   width = 90,
   align = "right",
 }: Props) {
@@ -45,7 +55,7 @@ export function InlineCell({
     }
     start(async () => {
       try {
-        await onSave(parsed);
+        await action({ ...actionInput, value: parsed });
         setValue(parsed);
         setDraft(fmt(parsed));
         setEditing(false);
