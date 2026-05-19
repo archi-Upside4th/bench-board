@@ -71,6 +71,31 @@ export const exploitResults = pgTable(
   (t) => ({ pk: primaryKey({ columns: [t.runId, t.agentId] }) })
 );
 
+/**
+ * Persistent per-trial records. Appended on every JSON paste in
+ * /admin/runs/import-trials and re-aggregated on each import into the chosen
+ * output run's detect_results / exploit_results.
+ */
+export const rawTrials = pgTable("raw_trials", {
+  id: serial("id").primaryKey(),
+  agentId: text("agent_id")
+    .notNull()
+    .references(() => agents.id, { onDelete: "cascade" }),
+  mode: text("mode").notNull(), // "detect" | "exploit"
+  task: text("task"),
+  // Detect fields
+  tpFindings: integer("tp_findings"),
+  fpFindings: integer("fp_findings"),
+  fnFindings: integer("fn_findings"),
+  // Exploit fields
+  label: text("label"),
+  // Both
+  costUsd: real("cost_usd"),
+  ts: text("ts"),
+  sourceRunId: text("source_run_id"),
+  importedAt: timestamp("imported_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
 export const fpRates = pgTable(
   "fp_rates",
   {
@@ -165,3 +190,4 @@ export type DetectResult = typeof detectResults.$inferSelect;
 export type ExploitResult = typeof exploitResults.$inferSelect;
 export type FpRate = typeof fpRates.$inferSelect;
 export type SiteSettings = typeof siteSettings.$inferSelect;
+export type RawTrial = typeof rawTrials.$inferSelect;

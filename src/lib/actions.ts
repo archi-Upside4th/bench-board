@@ -8,11 +8,12 @@ import {
   exploitResults,
   fpRates,
   siteSettings,
+  rawTrials,
 } from "@/db/schema";
 import { auth, isAdmin } from "@/auth";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { and, eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import { z } from "zod";
 
 async function assertAdmin() {
@@ -609,6 +610,7 @@ const trialSchema = z.object({
   tp_findings: z.number().nullable().optional(),
   fp_findings_estimate: z.number().nullable().optional(),
   fn_findings: z.number().nullable().optional(),
+  ts: z.string().optional(),
 }).passthrough();
 
 const DEFAULT_PALETTE = [
@@ -641,18 +643,20 @@ export type TrialImportSummary = {
 };
 
 /**
- * Parses raw text as one of:
- *   - JSON array of trial records
- *   - NDJSON (one trial per line)
- *   - Single trial object
- * Aggregates per-(run, mode, agent) and upserts.
+ * Accumulating import:
+ *   1. Parse trials from JSON / NDJSON / single object
+ *   2. INSERT each trial into raw_trials (append — never overwrites)
+ *   3. For every (agent, mode) touched, re-aggregate from the FULL accumulated set
+ *      and upsert into the target run's detect_results / exploit_results
+ *
+ * The per-record `run_id` is ignored for grouping — every paste accumulates into
+ * the single target run (defaults to the most recent existing run).
  */
 export async function importTrialResults(
   rawText: string,
   opts: {
     agentKeyField?: "model" | "agent";
-    defaultVersion?: string;
-    /** If set, all records are routed into this existing run (their JSON run_id is ignored). */
+    /** Run that receives the recomputed aggregates. Defaults to most-recent run. */
     targetRunId?: number;
   } = {}
 ): Promise<TrialImportSummary> {
@@ -660,16 +664,27 @@ export async function importTrialResults(
   const text = rawText.trim();
   if (!text) throw new Error("Empty input.");
 
-  // If a target run was specified, pre-fetch its runId so we can rewrite every record's run_id.
-  let forcedRunIdString: string | undefined;
+  // Pick target run (default: most-recent existing). The JSON's run_id is kept
+  // only as metadata in raw_trials.source_run_id, never used for grouping.
+  let targetRun: { id: number; runId: string; version: string };
   if (typeof opts.targetRunId === "number") {
     const [r] = await db
-      .select({ runId: evalRuns.runId })
+      .select({ id: evalRuns.id, runId: evalRuns.runId, version: evalRuns.version })
       .from(evalRuns)
       .where(eq(evalRuns.id, opts.targetRunId))
       .limit(1);
     if (!r) throw new Error(`Target run #${opts.targetRunId} not found.`);
-    forcedRunIdString = r.runId;
+    targetRun = r;
+  } else {
+    const [latest] = await db
+      .select({ id: evalRuns.id, runId: evalRuns.runId, version: evalRuns.version })
+      .from(evalRuns)
+      .orderBy(desc(evalRuns.createdAt))
+      .limit(1);
+    if (!latest) {
+      throw new Error("No runs exist. Create one first via /admin/runs/new.");
+    }
+    targetRun = latest;
   }
 
   // Parse
@@ -678,7 +693,6 @@ export async function importTrialResults(
     const parsed = JSON.parse(text);
     records = Array.isArray(parsed) ? parsed : [parsed];
   } catch {
-    // Try NDJSON
     const lines = text.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
     records = lines.map((line, i) => {
       try {
@@ -698,15 +712,15 @@ export async function importTrialResults(
     warnings: [],
   };
 
-  // Group trials by run + mode + agent
-  type Bucket = {
-    runId: string;
-    mode: "detect" | "exploit";
-    agentKey: string;
-    trials: z.infer<typeof trialSchema>[];
-  };
-  const buckets = new Map<string, Bucket>();
   const agentKeyField = opts.agentKeyField ?? "model";
+  type Pending = {
+    agentKey: string;
+    mode: "detect" | "exploit";
+    raw: z.infer<typeof trialSchema>;
+  };
+  const pendings: Pending[] = [];
+  const touched = new Set<string>(); // "agentKey|mode"
+  const uniqueAgents = new Set<string>();
 
   for (const raw of records) {
     const r = trialSchema.safeParse(raw);
@@ -716,34 +730,19 @@ export async function importTrialResults(
       continue;
     }
     const t = r.data;
-    // Honor explicit target run by rewriting the per-record run_id before grouping.
-    if (forcedRunIdString) t.run_id = forcedRunIdString;
-    if (!t.run_id) { summary.trialsSkipped++; summary.warnings.push("Skipped record without run_id"); continue; }
-    if (!t.mode)   { summary.trialsSkipped++; summary.warnings.push(`Skipped record (run_id=${t.run_id}) without mode`); continue; }
+    if (!t.mode) { summary.trialsSkipped++; summary.warnings.push(`Skipped record without mode`); continue; }
     const rawKey = (agentKeyField === "model" ? t.model : t.agent) ?? t.agent ?? t.model;
     if (!rawKey) { summary.trialsSkipped++; summary.warnings.push(`Skipped record without agent identifier`); continue; }
-    // Normalize: case-insensitive matching, but keep prefix and version differences (lowercase preserves
-    // structure — only the case is collapsed). So:
-    //   "OpenAI/GPT-4"  ==  "openai/gpt-4"
-    //   "openai/gpt-4"  !=  "anthropic/gpt-4"       (different scaffold)
-    //   "openai/gpt-4"  !=  "openai/gpt-4-turbo"    (different version)
     const agentKey = rawKey.toLowerCase();
 
     summary.trialsParsed++;
-    const k = `${t.run_id}|${t.mode}|${agentKey}`;
-    let b = buckets.get(k);
-    if (!b) {
-      b = { runId: t.run_id, mode: t.mode, agentKey, trials: [] };
-      buckets.set(k, b);
-    }
-    b.trials.push(t);
+    pendings.push({ agentKey, mode: t.mode, raw: t });
+    touched.add(`${agentKey}|${t.mode}`);
+    uniqueAgents.add(agentKey);
   }
 
-  // Discover all unique agents to ensure they exist
-  const uniqueAgents = Array.from(new Set(Array.from(buckets.values()).map((b) => b.agentKey)));
-
   await db.transaction(async (tx) => {
-    // 1) Upsert agent rows (only if missing)
+    // 1) Ensure agents exist
     for (const agentKey of uniqueAgents) {
       const [existing] = await tx.select().from(agents).where(eq(agents.id, agentKey)).limit(1);
       if (!existing) {
@@ -757,71 +756,48 @@ export async function importTrialResults(
       }
     }
 
-    // 2) For each unique run_id, find or create the run
-    const runIds = Array.from(new Set(Array.from(buckets.values()).map((b) => b.runId)));
-    const runRowByRunId = new Map<string, { id: number; version: string }>();
-    for (const runId of runIds) {
-      const [existing] = await tx
-        .select({ id: evalRuns.id, version: evalRuns.version })
-        .from(evalRuns)
-        .where(eq(evalRuns.runId, runId))
-        .limit(1);
-      if (existing) {
-        runRowByRunId.set(runId, existing);
-        continue;
-      }
-      // Create a new run with sensible defaults (admin can edit on detail page)
-      const version = opts.defaultVersion?.trim() || `auto-${runId.slice(0, 8)}`;
-      // Estimate task counts from this batch
-      const tasksInRun = new Set<string>();
-      let trialsInRun = 0;
-      for (const b of buckets.values()) {
-        if (b.runId !== runId) continue;
-        for (const t of b.trials) {
-          if (t.task) tasksInRun.add(t.task);
-          trialsInRun++;
-        }
-      }
-      const distinctAgents = new Set(
-        Array.from(buckets.values()).filter((b) => b.runId === runId).map((b) => b.agentKey)
+    // 2) APPEND every trial to raw_trials (never overwrites — that's how accumulation works)
+    if (pendings.length) {
+      await tx.insert(rawTrials).values(
+        pendings.map((p) => ({
+          agentId: p.agentKey,
+          mode: p.mode,
+          task: p.raw.task ?? null,
+          tpFindings: p.raw.tp_findings ?? null,
+          fpFindings: p.raw.fp_findings_estimate ?? null,
+          fnFindings: p.raw.fn_findings ?? null,
+          label: p.raw.label ?? null,
+          costUsd: p.raw.cost_usd ?? null,
+          ts: p.raw.ts ?? null,
+          sourceRunId: p.raw.run_id ?? null,
+        }))
       );
-      const trialsPerTask = tasksInRun.size > 0 && distinctAgents.size > 0
-        ? Math.max(1, Math.round(trialsInRun / (tasksInRun.size * distinctAgents.size)))
-        : 1;
-      const [created] = await tx
-        .insert(evalRuns)
-        .values({
-          version,
-          runId,
-          judgeModel: "auto-imported",
-          trialsPerTask,
-          totalTasks: Math.max(1, tasksInRun.size),
-          positiveTasks: Math.max(1, tasksInRun.size),
-          negativeTasks: 0,
-          categoriesCount: 1,
-          isPublic: false,
-        })
-        .returning();
-      runRowByRunId.set(runId, { id: created.id, version: created.version });
     }
 
-    // 3) For each bucket, compute aggregates and upsert
-    const detectInsertedByRun = new Map<number, number>();
-    const exploitInsertedByRun = new Map<number, number>();
+    // 3) For each touched (agent, mode), recompute aggregate from ALL accumulated trials
+    let detectAgents = 0;
+    let exploitAgents = 0;
 
-    for (const b of buckets.values()) {
-      const runDb = runRowByRunId.get(b.runId);
-      if (!runDb) continue;
+    for (const key of touched) {
+      const [agentKey, modeStr] = key.split("|");
+      const mode = modeStr as "detect" | "exploit";
 
-      const tasks = new Set(b.trials.map((t) => t.task).filter(Boolean) as string[]);
-      const nTasks = tasks.size || b.trials.length;
-      const validCosts = b.trials.map((t) => t.cost_usd).filter((c): c is number => typeof c === "number");
+      const allTrials = await tx
+        .select()
+        .from(rawTrials)
+        .where(and(eq(rawTrials.agentId, agentKey), eq(rawTrials.mode, mode)));
+
+      if (allTrials.length === 0) continue;
+
+      const tasks = new Set(allTrials.map((t) => t.task).filter(Boolean) as string[]);
+      const nTasks = tasks.size || allTrials.length;
+      const validCosts = allTrials.map((t) => t.costUsd).filter((c): c is number => typeof c === "number");
       const avgCost = validCosts.length ? validCosts.reduce((s, c) => s + c, 0) / validCosts.length : 0;
 
-      if (b.mode === "detect") {
-        const tp = b.trials.reduce((s, t) => s + (t.tp_findings ?? 0), 0);
-        const fp = b.trials.reduce((s, t) => s + (t.fp_findings_estimate ?? 0), 0);
-        const fn = b.trials.reduce((s, t) => s + (t.fn_findings ?? 0), 0);
+      if (mode === "detect") {
+        const tp = allTrials.reduce((s, t) => s + (t.tpFindings ?? 0), 0);
+        const fp = allTrials.reduce((s, t) => s + (t.fpFindings ?? 0), 0);
+        const fn = allTrials.reduce((s, t) => s + (t.fnFindings ?? 0), 0);
         const precision = tp + fp > 0 ? tp / (tp + fp) : 0;
         const recall = tp + fn > 0 ? tp / (tp + fn) : 0;
         const f1 = precision + recall > 0 ? (2 * precision * recall) / (precision + recall) : 0;
@@ -829,13 +805,10 @@ export async function importTrialResults(
         await tx
           .insert(detectResults)
           .values({
-            runId: runDb.id,
-            agentId: b.agentKey,
-            precision,
-            recall,
-            f1,
-            f1CiLow: f1,
-            f1CiHigh: f1,
+            runId: targetRun.id,
+            agentId: agentKey,
+            precision, recall, f1,
+            f1CiLow: f1, f1CiHigh: f1,
             costUsdPerTask: avgCost,
             nTasks,
           })
@@ -843,21 +816,19 @@ export async function importTrialResults(
             target: [detectResults.runId, detectResults.agentId],
             set: { precision, recall, f1, f1CiLow: f1, f1CiHigh: f1, costUsdPerTask: avgCost, nTasks },
           });
-        detectInsertedByRun.set(runDb.id, (detectInsertedByRun.get(runDb.id) ?? 0) + 1);
+        detectAgents++;
       } else {
-        const total = b.trials.length;
-        const success = b.trials.filter((t) => (t.label ?? "").toLowerCase().includes("success")).length / total;
-        const partial = b.trials.filter((t) => (t.label ?? "").toLowerCase().includes("partial")).length / total;
-        const fail = b.trials.filter((t) => (t.label ?? "").toLowerCase().includes("fail")).length / total;
+        const total = allTrials.length;
+        const success = allTrials.filter((t) => (t.label ?? "").toLowerCase().includes("success")).length / total;
+        const partial = allTrials.filter((t) => (t.label ?? "").toLowerCase().includes("partial")).length / total;
+        const fail = allTrials.filter((t) => (t.label ?? "").toLowerCase().includes("fail")).length / total;
 
         await tx
           .insert(exploitResults)
           .values({
-            runId: runDb.id,
-            agentId: b.agentKey,
-            success,
-            partial,
-            fail,
+            runId: targetRun.id,
+            agentId: agentKey,
+            success, partial, fail,
             costUsdPerTask: avgCost,
             nTasks,
           })
@@ -865,22 +836,37 @@ export async function importTrialResults(
             target: [exploitResults.runId, exploitResults.agentId],
             set: { success, partial, fail, costUsdPerTask: avgCost, nTasks },
           });
-        exploitInsertedByRun.set(runDb.id, (exploitInsertedByRun.get(runDb.id) ?? 0) + 1);
+        exploitAgents++;
       }
     }
 
-    for (const [runId, runDb] of runRowByRunId) {
-      summary.runs.push({
-        runId,
-        version: runDb.version,
-        detectAgents: detectInsertedByRun.get(runDb.id) ?? 0,
-        exploitAgents: exploitInsertedByRun.get(runDb.id) ?? 0,
-      });
-    }
+    summary.runs.push({
+      runId: targetRun.runId,
+      version: targetRun.version,
+      detectAgents,
+      exploitAgents,
+    });
   });
 
   bustCaches();
   return summary;
+}
+
+/**
+ * Wipes every accumulated raw trial. Also clears the resulting detect_results /
+ * exploit_results rows from the given run (so the leaderboard reflects the empty
+ * accumulator). Use to reset and start over.
+ */
+export async function clearAccumulatedTrials(opts: { targetRunId?: number } = {}) {
+  await assertAdmin();
+  await db.transaction(async (tx) => {
+    await tx.delete(rawTrials);
+    if (typeof opts.targetRunId === "number") {
+      await tx.delete(detectResults).where(eq(detectResults.runId, opts.targetRunId));
+      await tx.delete(exploitResults).where(eq(exploitResults.runId, opts.targetRunId));
+    }
+  });
+  bustCaches();
 }
 
 /* ============================ FP — add/delete row + category ============================ */

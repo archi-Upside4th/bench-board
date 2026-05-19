@@ -2,7 +2,11 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { importTrialResults, type TrialImportSummary } from "@/lib/actions";
+import {
+  importTrialResults,
+  clearAccumulatedTrials,
+  type TrialImportSummary,
+} from "@/lib/actions";
 
 const EXAMPLE = `{"ts": "2026-05-19T10:57:24+00:00", "run_id": "778f7a1023db", "task": "synth-nft-lending-002", "agent": "openrouter-detect", "model": "openai/gpt-oss-120b:free", "mode": "detect", "label": "fail", "score": 0.0, "cost_usd": null, "tp_findings": 0, "fp_findings_estimate": 5, "fn_findings": 1}
 {"ts": "2026-05-19T10:58:11+00:00", "run_id": "778f7a1023db", "task": "synth-flash-loan-001", "agent": "openrouter-detect", "model": "openai/gpt-oss-120b:free", "mode": "detect", "label": "ok", "score": 0.5, "cost_usd": 0.012, "tp_findings": 2, "fp_findings_estimate": 1, "fn_findings": 0}`;
@@ -12,13 +16,14 @@ type ExistingRun = { id: number; runId: string; version: string; isPublic: boole
 export function ImportTrialsForm({ existingRuns = [] }: { existingRuns?: ExistingRun[] }) {
   const router = useRouter();
   const [pending, start] = useTransition();
+  const [resetting, startReset] = useTransition();
   const [raw, setRaw] = useState("");
   const [keyField, setKeyField] = useState<"model" | "agent">("model");
-  const [version, setVersion] = useState("");
-  // "" = use run_id from JSON; otherwise the id of an existing run
+  // "" = use most-recent existing run; otherwise the id of a specific run
   const [targetRunId, setTargetRunId] = useState<string>("");
   const [summary, setSummary] = useState<TrialImportSummary | null>(null);
   const [err, setErr] = useState<string | null>(null);
+  const [resetMsg, setResetMsg] = useState<string | null>(null);
 
   function submit() {
     setErr(null);
@@ -30,11 +35,30 @@ export function ImportTrialsForm({ existingRuns = [] }: { existingRuns?: Existin
       try {
         const s = await importTrialResults(text, {
           agentKeyField: keyField,
-          defaultVersion: version || undefined,
           targetRunId: trid,
         });
         setSummary(s);
+        setRaw("");
         router.refresh();
+      } catch (e) {
+        setErr((e as Error).message);
+      }
+    });
+  }
+
+  function resetAll() {
+    if (!confirm(
+      "Wipe ALL accumulated trial records?\n\n" +
+      "Also clears the target run's detect_results / exploit_results so the leaderboard shows nothing for it. Irreversible."
+    )) return;
+    const trid = targetRunId ? Number(targetRunId) : undefined;
+    setResetMsg(null);
+    startReset(async () => {
+      try {
+        await clearAccumulatedTrials({ targetRunId: trid });
+        setResetMsg("Accumulated trials wiped. Next paste starts fresh.");
+        router.refresh();
+        setTimeout(() => setResetMsg(null), 4000);
       } catch (e) {
         setErr((e as Error).message);
       }
@@ -47,17 +71,29 @@ export function ImportTrialsForm({ existingRuns = [] }: { existingRuns?: Existin
 
   return (
     <div>
+      <div className="adm-banner" style={{ marginTop: 16 }}>
+        <strong>How accumulation works:</strong> every paste <b>appends</b> each
+        trial to a permanent <code>raw_trials</code> table. After the insert, the
+        target run's detect/exploit rows are <b>recomputed from the full history</b>
+        for each touched (agent, mode). So:
+        <ul style={{ marginTop: 8, paddingLeft: 18, lineHeight: 1.6 }}>
+          <li>Pasting more trials for the same model = more data feeding into the same F1.</li>
+          <li>The JSON's <code>run_id</code> is ignored for grouping (kept only as provenance).</li>
+          <li>To start over, hit <b>Reset accumulator</b> below.</li>
+        </ul>
+      </div>
+
       <section className="adm-section">
         <h2 className="adm-h2">Settings</h2>
         <div className="adm-grid cols-2" style={{ marginTop: 16 }}>
           <div className="adm-field" style={{ gridColumn: "1 / -1" }}>
-            <span className="adm-label">Target run</span>
+            <span className="adm-label">Output run</span>
             <select
               className="adm-select"
               value={targetRunId}
               onChange={(e) => setTargetRunId(e.target.value)}
             >
-              <option value="">Use run_id from each record (create new if missing)</option>
+              <option value="">Most recent run (default)</option>
               {existingRuns.map((r) => (
                 <option key={r.id} value={String(r.id)}>
                   {r.version} {r.isPublic ? "· public" : "· hidden"} · {r.runId}
@@ -65,9 +101,7 @@ export function ImportTrialsForm({ existingRuns = [] }: { existingRuns?: Existin
               ))}
             </select>
             <span className="adm-hint">
-              Pick an existing run to <b>merge into</b> it — every record's <code>run_id</code> is
-              rewritten to that run before grouping. Keeps you from accidentally spawning duplicate runs.
-              Note: per-(run, agent, mode) results are <i>replaced</i> by the latest paste, not accumulated.
+              The run whose Detect / Exploit tables are overwritten with the recomputed aggregates.
             </span>
           </div>
           <div className="adm-field">
@@ -84,21 +118,6 @@ export function ImportTrialsForm({ existingRuns = [] }: { existingRuns?: Existin
               Used as the agent.id key. Missing agents are auto-created with an inferred vendor and color.
             </span>
           </div>
-          <div className="adm-field">
-            <span className="adm-label">Default version (only when creating new run)</span>
-            <input
-              className="adm-input"
-              value={version}
-              onChange={(e) => setVersion(e.target.value)}
-              placeholder="v0.5 (optional)"
-              disabled={!!targetRunId}
-            />
-            <span className="adm-hint">
-              {targetRunId
-                ? "Ignored — you're merging into an existing run."
-                : "If the run_id doesn't exist yet, a new private run is created with this version."}
-            </span>
-          </div>
         </div>
       </section>
 
@@ -109,8 +128,8 @@ export function ImportTrialsForm({ existingRuns = [] }: { existingRuns?: Existin
         </div>
         <p className="lede" style={{ marginTop: 8 }}>
           Accepts: a JSON array, NDJSON (one trial per line), or a single object.
-          Required fields per record: <code>run_id</code>, <code>mode</code> (detect/exploit),
-          and either <code>model</code> or <code>agent</code>.
+          Required fields per record: <code>mode</code> (detect / exploit) and
+          either <code>model</code> or <code>agent</code>.
         </p>
         <textarea
           className="adm-textarea"
@@ -119,18 +138,30 @@ export function ImportTrialsForm({ existingRuns = [] }: { existingRuns?: Existin
           onChange={(e) => setRaw(e.target.value)}
           rows={16}
           style={{ marginTop: 12, lineHeight: 1.55, minHeight: 320 }}
-          placeholder={'{"run_id": "abc", "mode": "detect", "agent": "...", "model": "...", "tp_findings": 1, ...}'}
+          placeholder={'{"mode": "detect", "agent": "...", "model": "...", "tp_findings": 1, ...}'}
         />
       </section>
 
-      <section className="adm-section" style={{ display: "flex", gap: 12, alignItems: "center" }}>
+      <section className="adm-section" style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
         <button className="primary-btn" type="button" onClick={submit} disabled={pending}>
-          {pending ? "Aggregating…" : "Aggregate & import"}
+          {pending ? "Aggregating…" : "Append & recompute"}
         </button>
-        <span className="lede">Per-(run, mode, agent) buckets are computed then upserted.</span>
+        <button
+          className="ghost-btn"
+          type="button"
+          onClick={resetAll}
+          disabled={resetting}
+          style={{ color: "var(--bad)" }}
+        >
+          {resetting ? "Resetting…" : "Reset accumulator"}
+        </button>
+        <span className="lede">
+          Trials are appended; the chosen run's aggregates are recomputed from the full history.
+        </span>
       </section>
 
       {err ? <div className="adm-banner err" style={{ marginTop: 16 }}>{err}</div> : null}
+      {resetMsg ? <div className="adm-banner ok" style={{ marginTop: 16 }}>{resetMsg}</div> : null}
 
       {summary ? (
         <section className="adm-section">
@@ -144,15 +175,15 @@ export function ImportTrialsForm({ existingRuns = [] }: { existingRuns?: Existin
           {summary.runs.length > 0 ? (
             <div style={{ marginTop: 24 }}>
               <h3 style={{ fontSize: 13, color: "var(--mute)", textTransform: "uppercase", letterSpacing: "0.1em" }}>
-                Runs touched
+                Run updated
               </h3>
               <table className="adm-table" style={{ marginTop: 8 }}>
                 <thead>
                   <tr>
                     <th>Run ID</th>
                     <th>Version</th>
-                    <th className="num">Detect agents</th>
-                    <th className="num">Exploit agents</th>
+                    <th className="num">Detect agents recomputed</th>
+                    <th className="num">Exploit agents recomputed</th>
                     <th></th>
                   </tr>
                 </thead>
