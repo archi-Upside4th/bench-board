@@ -111,7 +111,7 @@ export const siteSettings = pgTable("site_settings", {
 
   // Hero stat card labels (the small caps text above each big number)
   heroStat1Label: text("hero_stat_1_label").notNull().default("Total tasks"),
-  heroStat2Label: text("hero_stat_2_label").notNull().default("Positive / Negative"),
+  heroStat2Label: text("hero_stat_2_label").notNull().default("Total trials"),
   heroStat3Label: text("hero_stat_3_label").notNull().default("Agents evaluated"),
   heroStat4Label: text("hero_stat_4_label").notNull().default("Trials per task"),
 

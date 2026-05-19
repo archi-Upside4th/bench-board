@@ -65,9 +65,8 @@ export default async function Page() {
             { k: s.heroStat1Label, v: run.totalTasks, x: `dataset ${run.version}` },
             {
               k: s.heroStat2Label,
-              v: run.positiveTasks,
-              vSmall: ` / ${run.negativeTasks}`,
-              x: `${Math.round((run.positiveTasks / run.totalTasks) * 100)}% positive`,
+              v: run.totalTasks * run.trialsPerTask * agents.length,
+              x: `${agents.length} agents × ${run.totalTasks} tasks × ${run.trialsPerTask} trials`,
             },
             { k: s.heroStat3Label, v: agents.length, x: "across vendors" },
             { k: s.heroStat4Label, v: run.trialsPerTask, x: run.judgeModel },
