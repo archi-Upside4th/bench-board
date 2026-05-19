@@ -11,7 +11,7 @@ import {
 import { auth, isAdmin } from "@/auth";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 
 async function assertAdmin() {
@@ -21,6 +21,15 @@ async function assertAdmin() {
     throw new Error("Unauthorized");
   }
 }
+
+function bustCaches() {
+  revalidatePath("/");
+  revalidatePath("/admin");
+  revalidatePath("/admin/agents");
+  revalidatePath("/admin/runs/new");
+}
+
+/* ============================ Agents ============================ */
 
 const agentSchema = z.object({
   id: z.string().min(1).max(80),
@@ -55,9 +64,7 @@ export async function upsertAgent(formData: FormData) {
         color: parsed.color,
       },
     });
-  revalidatePath("/admin");
-  revalidatePath("/admin/agents");
-  revalidatePath("/");
+  bustCaches();
 }
 
 export async function deleteAgent(formData: FormData) {
@@ -65,10 +72,10 @@ export async function deleteAgent(formData: FormData) {
   const id = String(formData.get("id") ?? "");
   if (!id) return;
   await db.delete(agents).where(eq(agents.id, id));
-  revalidatePath("/admin");
-  revalidatePath("/admin/agents");
-  revalidatePath("/");
+  bustCaches();
 }
+
+/* ============================ Run import (JSON, kept for power-users) ============================ */
 
 const runImportSchema = z.object({
   meta: z.object({
@@ -129,9 +136,27 @@ export type RunImport = z.infer<typeof runImportSchema>;
 export async function importRunFromJson(payload: unknown) {
   await assertAdmin();
   const parsed = runImportSchema.parse(payload);
+  await persistRun(parsed);
+  bustCaches();
+}
+
+export async function importRunFromForm(formData: FormData) {
+  const raw = String(formData.get("payload") ?? "").trim();
+  if (!raw) throw new Error("Empty payload");
+  let json: unknown;
+  try {
+    json = JSON.parse(raw);
+  } catch (e) {
+    throw new Error("Invalid JSON: " + (e as Error).message);
+  }
+  await importRunFromJson(json);
+  redirect("/admin");
+}
+
+async function persistRun(parsed: RunImport) {
   const m = parsed.meta;
 
-  await db.transaction(async (tx) => {
+  return db.transaction(async (tx) => {
     if (parsed.agents) {
       for (const a of parsed.agents) {
         await tx
@@ -222,21 +247,188 @@ export async function importRunFromJson(payload: unknown) {
       }
       if (rows.length) await tx.insert(fpRates).values(rows);
     }
-  });
 
-  revalidatePath("/");
-  revalidatePath("/admin");
+    return run;
+  });
 }
 
-export async function importRunFromForm(formData: FormData) {
-  const raw = String(formData.get("payload") ?? "").trim();
-  if (!raw) throw new Error("Empty payload");
-  let json: unknown;
-  try {
-    json = JSON.parse(raw);
-  } catch (e) {
-    throw new Error("Invalid JSON: " + (e as Error).message);
+/* ============================ Run create (grid form) ============================ */
+
+const createRunSchema = z.object({
+  meta: z.object({
+    dataset_version: z.string().min(1),
+    evaluation_run_id: z.string().min(1),
+    judge_model: z.string().min(1),
+    trials_per_task: z.number().int().positive(),
+    total_tasks: z.number().int().positive(),
+    positive_tasks: z.number().int().nonnegative(),
+    negative_tasks: z.number().int().nonnegative(),
+    categories: z.number().int().positive(),
+    is_public: z.boolean(),
+  }),
+  detect: z.array(
+    z.object({
+      agent: z.string(),
+      precision: z.number().min(0).max(1),
+      recall: z.number().min(0).max(1),
+      f1: z.number().min(0).max(1),
+      f1_ci_low: z.number().min(0).max(1),
+      f1_ci_high: z.number().min(0).max(1),
+      cost_usd_per_task: z.number().min(0),
+      n_tasks: z.number().int().nonnegative(),
+    })
+  ),
+  exploit: z.array(
+    z.object({
+      agent: z.string(),
+      success: z.number().min(0).max(1),
+      partial: z.number().min(0).max(1),
+      fail: z.number().min(0).max(1),
+      cost_usd_per_task: z.number().min(0),
+      n_tasks: z.number().int().nonnegative(),
+    })
+  ),
+  fp: z.object({
+    categories: z.array(z.string()),
+    rows: z.array(
+      z.object({
+        agent: z.string(),
+        rates: z.array(z.number().min(0).max(1)),
+      })
+    ),
+  }),
+});
+
+export type CreateRunInput = z.infer<typeof createRunSchema>;
+
+export async function createRun(input: CreateRunInput): Promise<{ id: number }> {
+  await assertAdmin();
+  const parsed = createRunSchema.parse(input);
+
+  const fpData: Record<string, number[]> = {};
+  for (const row of parsed.fp.rows) {
+    fpData[row.agent] = row.rates;
   }
-  await importRunFromJson(json);
-  redirect("/admin");
+
+  const run = await persistRun({
+    meta: parsed.meta,
+    summary_detect_blocked: parsed.detect,
+    summary_exploit_blocked: parsed.exploit,
+    fp_rate_by_negative_category: {
+      categories: parsed.fp.categories,
+      data: fpData,
+    },
+    is_public: parsed.meta.is_public,
+  });
+
+  bustCaches();
+  return { id: run.id };
+}
+
+/* ============================ Run mutations (detail page) ============================ */
+
+const detectCellSchema = z.object({
+  runId: z.number().int(),
+  agentId: z.string(),
+  field: z.enum([
+    "precision",
+    "recall",
+    "f1",
+    "f1CiLow",
+    "f1CiHigh",
+    "costUsdPerTask",
+    "nTasks",
+  ]),
+  value: z.number(),
+});
+
+export async function updateDetectCell(input: z.input<typeof detectCellSchema>) {
+  await assertAdmin();
+  const { runId, agentId, field, value } = detectCellSchema.parse(input);
+  await db
+    .update(detectResults)
+    .set({ [field]: value })
+    .where(and(eq(detectResults.runId, runId), eq(detectResults.agentId, agentId)));
+  bustCaches();
+}
+
+const exploitCellSchema = z.object({
+  runId: z.number().int(),
+  agentId: z.string(),
+  field: z.enum(["success", "partial", "fail", "costUsdPerTask", "nTasks"]),
+  value: z.number(),
+});
+
+export async function updateExploitCell(input: z.input<typeof exploitCellSchema>) {
+  await assertAdmin();
+  const { runId, agentId, field, value } = exploitCellSchema.parse(input);
+  await db
+    .update(exploitResults)
+    .set({ [field]: value })
+    .where(and(eq(exploitResults.runId, runId), eq(exploitResults.agentId, agentId)));
+  bustCaches();
+}
+
+const fpCellSchema = z.object({
+  runId: z.number().int(),
+  agentId: z.string(),
+  category: z.string(),
+  rate: z.number().min(0).max(1),
+});
+
+export async function updateFpCell(input: z.input<typeof fpCellSchema>) {
+  await assertAdmin();
+  const { runId, agentId, category, rate } = fpCellSchema.parse(input);
+  await db
+    .update(fpRates)
+    .set({ rate })
+    .where(
+      and(
+        eq(fpRates.runId, runId),
+        eq(fpRates.agentId, agentId),
+        eq(fpRates.category, category)
+      )
+    );
+  bustCaches();
+}
+
+const runMetaSchema = z.object({
+  id: z.number().int(),
+  version: z.string().min(1),
+  judgeModel: z.string().min(1),
+  trialsPerTask: z.number().int().positive(),
+  totalTasks: z.number().int().positive(),
+  positiveTasks: z.number().int().nonnegative(),
+  negativeTasks: z.number().int().nonnegative(),
+  categoriesCount: z.number().int().positive(),
+});
+
+export async function updateRunMeta(input: z.input<typeof runMetaSchema>) {
+  await assertAdmin();
+  const v = runMetaSchema.parse(input);
+  await db
+    .update(evalRuns)
+    .set({
+      version: v.version,
+      judgeModel: v.judgeModel,
+      trialsPerTask: v.trialsPerTask,
+      totalTasks: v.totalTasks,
+      positiveTasks: v.positiveTasks,
+      negativeTasks: v.negativeTasks,
+      categoriesCount: v.categoriesCount,
+    })
+    .where(eq(evalRuns.id, v.id));
+  bustCaches();
+}
+
+export async function setRunPublic(runId: number, isPublic: boolean) {
+  await assertAdmin();
+  await db.update(evalRuns).set({ isPublic }).where(eq(evalRuns.id, runId));
+  bustCaches();
+}
+
+export async function deleteRun(runId: number) {
+  await assertAdmin();
+  await db.delete(evalRuns).where(eq(evalRuns.id, runId));
+  bustCaches();
 }

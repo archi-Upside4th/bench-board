@@ -1,101 +1,92 @@
 import { db } from "@/db";
-import { agents } from "@/db/schema";
-import { upsertAgent, deleteAgent } from "@/lib/actions";
+import { agents, detectResults } from "@/db/schema";
+import { asc, count, eq, sql } from "drizzle-orm";
+import { deleteAgent } from "@/lib/actions";
+import { AgentForm } from "./AgentForm";
 
 export const dynamic = "force-dynamic";
 
 export default async function AgentsAdmin() {
-  const rows = await db.select().from(agents);
+  const rows = await db.select().from(agents).orderBy(asc(agents.id));
+
+  // participation count: how many distinct runs each agent appears in
+  const participationRows = await db
+    .select({
+      agentId: detectResults.agentId,
+      runs: sql<number>`count(distinct ${detectResults.runId})`.as("runs"),
+    })
+    .from(detectResults)
+    .groupBy(detectResults.agentId);
+
+  const participation = new Map(
+    participationRows.map((r) => [r.agentId, Number(r.runs)])
+  );
+
+  const vendors = Array.from(new Set(rows.map((r) => r.vendor))).sort();
 
   return (
-    <div className="wrap" style={{ paddingTop: 56, paddingBottom: 80, maxWidth: 880 }}>
-      <h1 style={{ fontSize: 28, margin: 0 }}>Agents</h1>
-      <p className="lede" style={{ marginTop: 12 }}>
-        Each evaluated model is one agent row. The <code>id</code> is the foreign key
-        used by all result tables, so don't rename it after results are imported.
+    <div className="wrap adm-wrap" style={{ maxWidth: 1080 }}>
+      <h1 className="adm-h1">Agents</h1>
+      <p className="lede" style={{ marginTop: 12, maxWidth: "64ch" }}>
+        Each evaluated model is one row. The <code>id</code> is the foreign key
+        used by every result table, so don't rename it after results are imported —
+        delete and re-add if you have to.
       </p>
 
-      <section style={{ marginTop: 40 }}>
-        <h3>Add / update agent</h3>
-        <form action={upsertAgent} style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginTop: 12 }}>
-          <Field name="id" label="Agent ID" placeholder="claude-opus-4-7" required />
-          <Field name="vendor" label="Vendor" placeholder="Anthropic" required />
-          <Field name="release_date" label="Release (YYYY-MM)" placeholder="2026-03" required />
-          <Field name="color" label="Color (hex)" placeholder="#D97757" required />
-          <div style={{ gridColumn: "1 / -1" }}>
-            <button className="primary-btn" type="submit">Save</button>
-          </div>
-        </form>
+      <section className="adm-section">
+        <h2 className="adm-h2">Add / update</h2>
+        <div style={{ marginTop: 16 }}>
+          <AgentForm vendors={vendors} />
+        </div>
       </section>
 
-      <section style={{ marginTop: 56 }}>
-        <h3>Current agents ({rows.length})</h3>
-        <table className="lb" style={{ marginTop: 12 }}>
+      <section className="adm-section">
+        <h2 className="adm-h2">Current agents ({rows.length})</h2>
+        <table className="adm-table" style={{ marginTop: 16 }}>
           <thead>
             <tr>
               <th>Agent</th>
               <th>Vendor</th>
               <th>Release</th>
               <th>Color</th>
+              <th>Runs participated</th>
               <th></th>
             </tr>
           </thead>
           <tbody>
-            {rows.map((a) => (
-              <tr key={a.id}>
-                <td className="agent-cell">
-                  <span className="agent-swatch" style={{ background: a.color }} />
-                  <span className="agent-name">{a.id}</span>
-                </td>
-                <td className="vendor">{a.vendor}</td>
-                <td className="num-col">{a.releaseDate}</td>
-                <td className="mono" style={{ fontSize: 12 }}>{a.color}</td>
-                <td>
-                  <form action={deleteAgent}>
-                    <input type="hidden" name="id" value={a.id} />
-                    <button className="ghost-btn" type="submit">Delete</button>
-                  </form>
-                </td>
-              </tr>
-            ))}
+            {rows.map((a) => {
+              const count = participation.get(a.id) ?? 0;
+              return (
+                <tr key={a.id}>
+                  <td>
+                    <div className="agent-cell">
+                      <span className="agent-swatch" style={{ background: a.color, width: 14, height: 14, borderRadius: 4 }} />
+                      <span className="agent-name">{a.id}</span>
+                    </div>
+                  </td>
+                  <td className="vendor">{a.vendor}</td>
+                  <td className="num-col">{a.releaseDate}</td>
+                  <td className="mono" style={{ fontSize: 11.5 }}>{a.color}</td>
+                  <td className="num-col">{count}</td>
+                  <td>
+                    <form action={deleteAgent}>
+                      <input type="hidden" name="id" value={a.id} />
+                      <button
+                        className="ghost-btn"
+                        type="submit"
+                        style={{ color: count > 0 ? "var(--mute)" : "var(--bad)", height: 28, padding: "0 10px", fontSize: 12 }}
+                        title={count > 0 ? `In ${count} run(s) — deletion will cascade` : "Delete agent"}
+                      >
+                        Delete
+                      </button>
+                    </form>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </section>
     </div>
-  );
-}
-
-function Field({
-  name,
-  label,
-  placeholder,
-  required,
-}: {
-  name: string;
-  label: string;
-  placeholder?: string;
-  required?: boolean;
-}) {
-  return (
-    <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-      <span style={{ fontSize: 11, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--mute)" }}>
-        {label}
-      </span>
-      <input
-        type="text"
-        name={name}
-        placeholder={placeholder}
-        required={required}
-        style={{
-          background: "var(--bg-elev)",
-          border: "1px solid var(--line)",
-          color: "var(--ink)",
-          borderRadius: 6,
-          padding: "10px 12px",
-          fontFamily: "var(--mono)",
-          fontSize: 13,
-        }}
-      />
-    </label>
   );
 }

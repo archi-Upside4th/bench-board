@@ -595,3 +595,125 @@
     .fp-row, .fp-axis { grid-template-columns: 140px 1fr 50px; }
     .hm { grid-template-columns: 120px repeat(7, minmax(40px, 1fr)); font-size: 11px; }
   }
+
+  /* ============================ Admin UI ============================ */
+  .adm-wrap { padding: 56px 0 80px; }
+  .adm-h1 { font-size: 28px; margin: 0; letter-spacing: -0.02em; }
+  .adm-h2 { font-size: 16px; margin: 0; color: var(--ink); letter-spacing: -0.01em; }
+  .adm-section { margin-top: 48px; }
+  .adm-section + .adm-section { border-top: 1px solid var(--line); padding-top: 40px; }
+  .adm-row { display: flex; align-items: center; gap: 12px; }
+  .adm-row.between { justify-content: space-between; }
+
+  .adm-input,
+  .adm-select,
+  .adm-textarea {
+    background: var(--bg-elev);
+    border: 1px solid var(--line);
+    color: var(--ink);
+    border-radius: 6px;
+    padding: 9px 12px;
+    font-family: var(--mono);
+    font-size: 13px;
+    width: 100%;
+    transition: border-color 120ms, background 120ms;
+  }
+  .adm-input:focus,
+  .adm-select:focus,
+  .adm-textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+    background: #1f1f26;
+  }
+  .adm-input.num { text-align: right; font-variant-numeric: tabular-nums; }
+  .adm-input.invalid { border-color: var(--bad); background: rgba(248, 113, 113, 0.06); }
+  .adm-color {
+    height: 36px; width: 56px; padding: 2px;
+    background: var(--bg-elev); border: 1px solid var(--line); border-radius: 6px;
+    cursor: pointer;
+  }
+
+  .adm-field { display: flex; flex-direction: column; gap: 6px; }
+  .adm-label { font-size: 10.5px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--mute); font-weight: 600; }
+  .adm-hint { font-size: 11.5px; color: var(--mute-2); }
+  .adm-grid { display: grid; gap: 16px; }
+  .adm-grid.cols-2 { grid-template-columns: 1fr 1fr; }
+  .adm-grid.cols-3 { grid-template-columns: repeat(3, 1fr); }
+  .adm-grid.cols-4 { grid-template-columns: repeat(4, 1fr); }
+  @media (max-width: 760px) {
+    .adm-grid.cols-2, .adm-grid.cols-3, .adm-grid.cols-4 { grid-template-columns: 1fr; }
+  }
+
+  /* Admin table — looser version of the public leaderboard table */
+  table.adm-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  table.adm-table thead th {
+    text-align: left; font-weight: 600; color: var(--mute);
+    font-size: 10.5px; letter-spacing: 0.1em; text-transform: uppercase;
+    padding: 10px 10px; background: rgba(15,15,20,0.4);
+    border-bottom: 1px solid var(--line); white-space: nowrap;
+  }
+  table.adm-table tbody td {
+    padding: 4px 8px; border-bottom: 1px solid var(--line-soft);
+    vertical-align: middle;
+  }
+  table.adm-table tbody td.tight { padding: 2px 4px; }
+  table.adm-table tbody tr:hover { background: rgba(255,255,255,0.02); }
+  table.adm-table td .adm-input { padding: 6px 8px; font-size: 12px; }
+
+  /* Tabs (admin) */
+  .adm-tabs { display: inline-flex; gap: 2px; padding: 3px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg-elev); }
+  .adm-tabs button {
+    appearance: none; border: 0; background: transparent;
+    padding: 6px 12px; font: inherit; font-size: 12px; font-weight: 500;
+    color: var(--mute); border-radius: 5px; cursor: pointer;
+    font-family: var(--mono); letter-spacing: 0.02em;
+  }
+  .adm-tabs button:hover { color: var(--ink); }
+  .adm-tabs button[aria-pressed="true"] {
+    background: var(--bg-card); color: var(--ink);
+    box-shadow: inset 0 0 0 1px var(--line);
+  }
+
+  /* Status pills */
+  .adm-status {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 3px 9px; border-radius: 999px;
+    font-family: var(--mono); font-size: 11px;
+    border: 1px solid var(--line); color: var(--mute);
+  }
+  .adm-status.public { color: var(--good); border-color: rgba(52,211,153,0.30); background: rgba(52,211,153,0.10); }
+  .adm-status.hidden { color: var(--mute-2); border-color: var(--line-soft); background: var(--bg-elev); }
+
+  /* Save indicator (autosave) */
+  .adm-saved { color: var(--good); font-size: 11px; opacity: 0; transition: opacity 160ms; }
+  .adm-saved.show { opacity: 1; }
+
+  /* Delta badge */
+  .adm-delta { font-family: var(--mono); font-size: 11px; padding: 1px 6px; border-radius: 4px; }
+  .adm-delta.up   { color: var(--good); background: rgba(52,211,153,0.10); }
+  .adm-delta.down { color: var(--bad);  background: rgba(248,113,113,0.10); }
+  .adm-delta.flat { color: var(--mute); background: var(--line-soft); }
+
+  /* Agent checkbox grid */
+  .adm-agent-picker {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 10px;
+  }
+  .adm-agent-pick {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 12px;
+    border: 1px solid var(--line); border-radius: 8px; background: var(--bg-card);
+    cursor: pointer; transition: border-color 100ms, background 100ms;
+    font-size: 12.5px;
+  }
+  .adm-agent-pick input { accent-color: var(--accent); }
+  .adm-agent-pick:hover { border-color: var(--mute-2); }
+  .adm-agent-pick.on { border-color: rgba(20,184,166,0.45); background: rgba(20,184,166,0.05); }
+
+  /* Toast / error banner */
+  .adm-banner {
+    padding: 12px 14px; border-radius: 8px; border: 1px solid var(--line);
+    background: var(--bg-card); font-size: 13px; color: var(--ink-2);
+  }
+  .adm-banner.err { border-color: rgba(248,113,113,0.35); background: rgba(248,113,113,0.06); color: var(--bad); }
+  .adm-banner.ok  { border-color: rgba(52,211,153,0.30); background: rgba(52,211,153,0.06); color: var(--good); }
