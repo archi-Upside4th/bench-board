@@ -197,7 +197,7 @@ export const siteSettings = pgTable("site_settings", {
   // Section H2 titles
   leaderboardTitle: text("leaderboard_title").notNull().default("LLM ranking"),
   leaderboardLede: text("leaderboard_lede").notNull().default(
-    "Switch modes to compare detection F1 vs exploit success rate. Confidence intervals from 3 trials × bootstrap."
+    "Detect mode = F1 · Exploit mode = success rate."
   ),
 
   // Custom-agent (Claude Code / Codex / etc.) ranking section
