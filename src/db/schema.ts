@@ -203,7 +203,7 @@ export const siteSettings = pgTable("site_settings", {
   // Custom-agent (Claude Code / Codex / etc.) ranking section
   agentRankingTitle: text("agent_ranking_title").notNull().default("Agent ranking"),
   agentRankingLede: text("agent_ranking_lede").notNull().default(
-    "Custom coding agents and frameworks built on top of LLMs — Claude Code, Codex, V12, Sherlock, etc."
+    "Custom agents and frameworks built on top of LLMs"
   ),
 
   paretoTitle: text("pareto_title").notNull().default("Reasoning frontier"),

@@ -16,7 +16,6 @@ export function AgentRanking({ agents, results, title, lede }: Props) {
       <div className="wrap">
         <div className="section-head">
           <div className="left">
-            <div className="section-eyebrow">Coding agents</div>
             <h2>{title}</h2>
             <p className="lede">{lede}</p>
           </div>
