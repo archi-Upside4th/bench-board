@@ -48,6 +48,7 @@ export const detectResults = pgTable(
     f1CiLow: real("f1_ci_low").notNull(),
     f1CiHigh: real("f1_ci_high").notNull(),
     costUsdPerTask: real("cost_usd_per_task").notNull(),
+    reasoningTokensPerTask: real("reasoning_tokens_per_task"),
     nTasks: integer("n_tasks").notNull(),
   },
   (t) => ({ pk: primaryKey({ columns: [t.runId, t.agentId] }) })
@@ -91,6 +92,7 @@ export const rawTrials = pgTable("raw_trials", {
   label: text("label"),
   // Both
   costUsd: real("cost_usd"),
+  reasoningTokens: integer("reasoning_tokens"),
   ts: text("ts"),
   sourceRunId: text("source_run_id"),
   importedAt: timestamp("imported_at", { withTimezone: true }).defaultNow().notNull(),
@@ -146,15 +148,15 @@ export const siteSettings = pgTable("site_settings", {
     "Switch modes to compare detection F1 vs exploit success rate. Confidence intervals from 3 trials × bootstrap."
   ),
 
-  paretoTitle: text("pareto_title").notNull().default("Pareto frontier"),
+  paretoTitle: text("pareto_title").notNull().default("Reasoning frontier"),
   paretoLede: text("pareto_lede").notNull().default(
-    "Each point is one agent. Higher and to the left is better — strong detection F1 at low per-task cost."
+    "Each point is one agent. X = mean reasoning tokens spent per task; Y = detection F1. Look for agents that score high with the fewest tokens."
   ),
   paretoQuote: text("pareto_quote").notNull().default(
-    "The frontier illustrates a clean cost–accuracy trade-off: **top-tier F1 doesn't require top-tier spend**."
+    "**More thinking ≠ more accuracy.** The frontier exposes which models actually convert reasoning effort into better detection."
   ),
   paretoBody: text("pareto_body").notNull().default(
-    "The lowest-cost frontier agent achieves competitive F1 at a fraction of the cost of the top model — a meaningful trade if budget-sensitive deployment matters."
+    "Top-left agents hit competitive F1 with surprisingly little reasoning. Models drifting right of the frontier are burning tokens for marginal gain — a signal that bigger think-time isn't paying off."
   ),
 
   fpTitle: text("fp_title").notNull().default("FP rate on hardened decoys"),

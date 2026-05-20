@@ -610,6 +610,7 @@ const trialSchema = z.object({
   tp_findings: z.number().nullable().optional(),
   fp_findings_estimate: z.number().nullable().optional(),
   fn_findings: z.number().nullable().optional(),
+  reasoning_tokens: z.number().nullable().optional(),
   ts: z.string().optional(),
 }).passthrough();
 
@@ -785,6 +786,7 @@ export async function importTrialResults(
           fnFindings: p.raw.fn_findings ?? null,
           label: p.raw.label ?? null,
           costUsd: p.raw.cost_usd ?? null,
+          reasoningTokens: p.raw.reasoning_tokens ?? null,
           ts: p.raw.ts ?? null,
           sourceRunId: p.raw.run_id ?? null,
         }))
@@ -810,6 +812,12 @@ export async function importTrialResults(
       const nTasks = tasks.size || allTrials.length;
       const validCosts = allTrials.map((t) => t.costUsd).filter((c): c is number => typeof c === "number");
       const avgCost = validCosts.length ? validCosts.reduce((s, c) => s + c, 0) / validCosts.length : 0;
+      const validReasoning = allTrials
+        .map((t) => t.reasoningTokens)
+        .filter((r): r is number => typeof r === "number");
+      const avgReasoning = validReasoning.length
+        ? validReasoning.reduce((s, v) => s + v, 0) / validReasoning.length
+        : null;
 
       if (mode === "detect") {
         const tp = allTrials.reduce((s, t) => s + (t.tpFindings ?? 0), 0);
@@ -827,11 +835,17 @@ export async function importTrialResults(
             precision, recall, f1,
             f1CiLow: f1, f1CiHigh: f1,
             costUsdPerTask: avgCost,
+            reasoningTokensPerTask: avgReasoning,
             nTasks,
           })
           .onConflictDoUpdate({
             target: [detectResults.runId, detectResults.agentId],
-            set: { precision, recall, f1, f1CiLow: f1, f1CiHigh: f1, costUsdPerTask: avgCost, nTasks },
+            set: {
+              precision, recall, f1, f1CiLow: f1, f1CiHigh: f1,
+              costUsdPerTask: avgCost,
+              reasoningTokensPerTask: avgReasoning,
+              nTasks,
+            },
           });
         detectAgents++;
       } else {
