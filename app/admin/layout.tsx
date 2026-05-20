@@ -25,10 +25,13 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             </span>
           </Link>
           <span className="header-spacer" />
-          <nav style={{ display: "flex", gap: 18, fontSize: 13 }}>
+          <nav style={{ display: "flex", gap: 18, fontSize: 13, alignItems: "center" }}>
             <Link href="/admin">Dashboard</Link>
             <Link href="/admin/runs/import-trials">Import</Link>
             <Link href="/admin/site">Site text</Link>
+            <Link href="/" className="ghost-btn" style={{ height: 30, padding: "0 12px", fontSize: 12 }}>
+              View site ↗
+            </Link>
           </nav>
           <form
             action={async () => {
