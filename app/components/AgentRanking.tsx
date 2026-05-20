@@ -79,13 +79,12 @@ export function AgentRanking({ agents, detect, exploit, title, lede, isAdmin }: 
         </div>
 
         <div className="lb-card">
-          <div className="lb-stack">
-            <div className={`lb-pane ${mode === "detect" ? "on" : ""}`} aria-hidden={mode !== "detect"}>
-              <div className="lb-scroll">
-                {detectSorted.length === 0 ? (
-                  <Empty mode="Detect" isAdmin={isAdmin} />
-                ) : (
-                  <table className="lb">
+          {mode === "detect" ? (
+            <div className="lb-scroll">
+              {detectSorted.length === 0 ? (
+                <Empty mode="Detect" isAdmin={isAdmin} />
+              ) : (
+                <table className="lb">
                     <thead>
                       <tr>
                         <th>Rank</th>
@@ -125,17 +124,15 @@ export function AgentRanking({ agents, detect, exploit, title, lede, isAdmin }: 
                         );
                       })}
                     </tbody>
-                  </table>
-                )}
-              </div>
+                </table>
+              )}
             </div>
-
-            <div className={`lb-pane ${mode === "exploit" ? "on" : ""}`} aria-hidden={mode !== "exploit"}>
-              <div className="lb-scroll">
-                {exploitSorted.length === 0 ? (
-                  <Empty mode="Exploit" isAdmin={isAdmin} />
-                ) : (
-                  <table className="lb">
+          ) : (
+            <div className="lb-scroll">
+              {exploitSorted.length === 0 ? (
+                <Empty mode="Exploit" isAdmin={isAdmin} />
+              ) : (
+                <table className="lb">
                     <thead>
                       <tr>
                         <th>Rank</th>
@@ -176,11 +173,10 @@ export function AgentRanking({ agents, detect, exploit, title, lede, isAdmin }: 
                         );
                       })}
                     </tbody>
-                  </table>
-                )}
-              </div>
+                </table>
+              )}
             </div>
-          </div>
+          )}
         </div>
       </div>
     </section>
