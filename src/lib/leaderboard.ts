@@ -9,6 +9,7 @@ import {
   customAgents,
   customAgentResults,
   customAgentExploitResults,
+  customAgentFpRates,
 } from "@/db/schema";
 import { desc, eq } from "drizzle-orm";
 
@@ -23,6 +24,8 @@ export type LeaderboardPayload = {
   customAgents: (typeof customAgents.$inferSelect)[];
   customAgentResults: (typeof customAgentResults.$inferSelect)[];
   customAgentExploitResults: (typeof customAgentExploitResults.$inferSelect)[];
+  customFpRows: { agentId: string; values: { category: string; rate: number }[] }[];
+  customFpCategories: string[];
 };
 
 export async function getLatestRun(): Promise<LeaderboardPayload | null> {
@@ -44,6 +47,7 @@ export async function getLatestRun(): Promise<LeaderboardPayload | null> {
     customAgentRows,
     customAgentResultsRows,
     customAgentExploitRows,
+    customFps,
   ] = await Promise.all([
     db.select().from(agents),
     db.select().from(detectResults).where(eq(detectResults.runId, run.id)),
@@ -53,6 +57,7 @@ export async function getLatestRun(): Promise<LeaderboardPayload | null> {
     db.select().from(customAgents),
     db.select().from(customAgentResults).where(eq(customAgentResults.runId, run.id)),
     db.select().from(customAgentExploitResults).where(eq(customAgentExploitResults.runId, run.id)),
+    db.select().from(customAgentFpRates).where(eq(customAgentFpRates.runId, run.id)),
   ]);
 
   const categoriesSet = new Set<string>();
@@ -71,6 +76,22 @@ export async function getLatestRun(): Promise<LeaderboardPayload | null> {
     values,
   }));
 
+  // Same shape for custom-agent FP
+  const customFpCategorySet = new Set<string>();
+  for (const r of customFps) customFpCategorySet.add(r.category);
+  const customFpCategories = Array.from(customFpCategorySet);
+
+  const customByAgent = new Map<string, { category: string; rate: number }[]>();
+  for (const r of customFps) {
+    const arr = customByAgent.get(r.agentId) ?? [];
+    arr.push({ category: r.category, rate: r.rate });
+    customByAgent.set(r.agentId, arr);
+  }
+  const customFpRows = Array.from(customByAgent.entries()).map(([agentId, values]) => ({
+    agentId,
+    values,
+  }));
+
   return {
     run,
     agents: agentRows,
@@ -82,5 +103,7 @@ export async function getLatestRun(): Promise<LeaderboardPayload | null> {
     customAgents: customAgentRows,
     customAgentResults: customAgentResultsRows,
     customAgentExploitResults: customAgentExploitRows,
+    customFpRows,
+    customFpCategories,
   };
 }

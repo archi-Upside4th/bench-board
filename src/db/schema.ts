@@ -86,6 +86,22 @@ export const customAgentResults = pgTable(
   (t) => ({ pk: primaryKey({ columns: [t.runId, t.agentId] }) })
 );
 
+// FP rates per (run, custom_agent, category) — sibling of fp_rates.
+export const customAgentFpRates = pgTable(
+  "custom_agent_fp_rates",
+  {
+    runId: integer("run_id")
+      .notNull()
+      .references(() => evalRuns.id, { onDelete: "cascade" }),
+    agentId: text("agent_id")
+      .notNull()
+      .references(() => customAgents.id, { onDelete: "cascade" }),
+    category: text("category").notNull(),
+    rate: real("rate").notNull(),
+  },
+  (t) => ({ pk: primaryKey({ columns: [t.runId, t.agentId, t.category] }) })
+);
+
 // Exploit-mode results for custom agents (success/partial/fail rates).
 export const customAgentExploitResults = pgTable(
   "custom_agent_exploit_results",
@@ -275,3 +291,4 @@ export type ReasoningPoint = typeof reasoningPoints.$inferSelect;
 export type CustomAgent = typeof customAgents.$inferSelect;
 export type CustomAgentResult = typeof customAgentResults.$inferSelect;
 export type CustomAgentExploitResult = typeof customAgentExploitResults.$inferSelect;
+export type CustomAgentFpRate = typeof customAgentFpRates.$inferSelect;

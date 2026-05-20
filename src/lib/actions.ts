@@ -13,6 +13,7 @@ import {
   customAgents,
   customAgentResults,
   customAgentExploitResults,
+  customAgentFpRates,
 } from "@/db/schema";
 import { auth, isAdmin } from "@/auth";
 import { revalidatePath } from "next/cache";
@@ -1026,6 +1027,85 @@ export async function deleteCustomAgentExploitRow(input: z.input<typeof rowKeySc
   await db
     .delete(customAgentExploitResults)
     .where(and(eq(customAgentExploitResults.runId, runId), eq(customAgentExploitResults.agentId, agentId)));
+  bustCaches();
+}
+
+/* --- Custom agent FP rates --- */
+
+const customFpCellSchema = z.object({
+  runId: z.number().int(),
+  agentId: z.string(),
+  category: z.string(),
+  value: z.number().min(0).max(1),
+});
+export async function updateCustomAgentFpCell(input: z.input<typeof customFpCellSchema>) {
+  await assertAdmin();
+  const { runId, agentId, category, value } = customFpCellSchema.parse(input);
+  await db
+    .update(customAgentFpRates)
+    .set({ rate: value })
+    .where(
+      and(
+        eq(customAgentFpRates.runId, runId),
+        eq(customAgentFpRates.agentId, agentId),
+        eq(customAgentFpRates.category, category)
+      )
+    );
+  bustCaches();
+}
+
+const customFpCategorySchema = z.object({
+  runId: z.number().int(),
+  category: z.string().min(1).max(120),
+});
+export async function addCustomAgentFpCategory(input: z.input<typeof customFpCategorySchema>) {
+  await assertAdmin();
+  const { runId, category } = customFpCategorySchema.parse(input);
+  const existingAgents = await db
+    .selectDistinct({ id: customAgentFpRates.agentId })
+    .from(customAgentFpRates)
+    .where(eq(customAgentFpRates.runId, runId));
+  const agentIds = existingAgents.length
+    ? existingAgents.map((r) => r.id)
+    : (await db.select({ id: customAgents.id }).from(customAgents)).map((r) => r.id);
+  if (agentIds.length === 0) return;
+  await db
+    .insert(customAgentFpRates)
+    .values(agentIds.map((agentId) => ({ runId, agentId, category, rate: 0 })))
+    .onConflictDoNothing();
+  bustCaches();
+}
+
+export async function deleteCustomAgentFpCategory(input: z.input<typeof customFpCategorySchema>) {
+  await assertAdmin();
+  const { runId, category } = customFpCategorySchema.parse(input);
+  await db
+    .delete(customAgentFpRates)
+    .where(and(eq(customAgentFpRates.runId, runId), eq(customAgentFpRates.category, category)));
+  bustCaches();
+}
+
+export async function addCustomAgentFpRow(input: z.input<typeof rowKeySchema>) {
+  await assertAdmin();
+  const { runId, agentId } = rowKeySchema.parse(input);
+  const cats = await db
+    .selectDistinct({ category: customAgentFpRates.category })
+    .from(customAgentFpRates)
+    .where(eq(customAgentFpRates.runId, runId));
+  if (cats.length === 0) return;
+  await db
+    .insert(customAgentFpRates)
+    .values(cats.map((c) => ({ runId, agentId, category: c.category, rate: 0 })))
+    .onConflictDoNothing();
+  bustCaches();
+}
+
+export async function deleteCustomAgentFpRow(input: z.input<typeof rowKeySchema>) {
+  await assertAdmin();
+  const { runId, agentId } = rowKeySchema.parse(input);
+  await db
+    .delete(customAgentFpRates)
+    .where(and(eq(customAgentFpRates.runId, runId), eq(customAgentFpRates.agentId, agentId)));
   bustCaches();
 }
 

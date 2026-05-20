@@ -49,6 +49,7 @@ export default async function Page() {
   const {
     run, agents, detect, exploit, fpRows, fpCategories, reasoning,
     customAgents, customAgentResults, customAgentExploitResults,
+    customFpRows, customFpCategories,
   } = data;
 
   return (
@@ -91,9 +92,12 @@ export default async function Page() {
           lede={s.agentRankingLede}
         />
         <FpAnalysis
-          agents={agents}
-          categories={fpCategories}
-          rows={fpRows}
+          llmAgents={agents}
+          llmCategories={fpCategories}
+          llmRows={fpRows}
+          customAgents={customAgents}
+          customCategories={customFpCategories}
+          customRows={customFpRows}
           title={s.fpTitle}
           lede={s.fpLede}
         />

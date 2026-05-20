@@ -9,6 +9,7 @@ import {
   customAgents,
   customAgentResults,
   customAgentExploitResults,
+  customAgentFpRates,
 } from "@/db/schema";
 import { eq, asc } from "drizzle-orm";
 import { notFound } from "next/navigation";
@@ -43,6 +44,7 @@ export default async function RunDetailPage({ params }: PageParams) {
     customAgentRows,
     customResults,
     customExploit,
+    customFps,
   ] = await Promise.all([
     db.select().from(agents).orderBy(asc(agents.id)),
     db.select().from(detectResults).where(eq(detectResults.runId, runId)),
@@ -52,6 +54,7 @@ export default async function RunDetailPage({ params }: PageParams) {
     db.select().from(customAgents).orderBy(asc(customAgents.id)),
     db.select().from(customAgentResults).where(eq(customAgentResults.runId, runId)),
     db.select().from(customAgentExploitResults).where(eq(customAgentExploitResults.runId, runId)),
+    db.select().from(customAgentFpRates).where(eq(customAgentFpRates.runId, runId)),
   ]);
 
   const fpCategories = Array.from(new Set(fps.map((f) => f.category)));
@@ -59,6 +62,13 @@ export default async function RunDetailPage({ params }: PageParams) {
   for (const r of fps) {
     if (!fpByAgent.has(r.agentId)) fpByAgent.set(r.agentId, new Map());
     fpByAgent.get(r.agentId)!.set(r.category, r.rate);
+  }
+
+  const customFpCategories = Array.from(new Set(customFps.map((f) => f.category)));
+  const customFpByAgent = new Map<string, Map<string, number>>();
+  for (const r of customFps) {
+    if (!customFpByAgent.has(r.agentId)) customFpByAgent.set(r.agentId, new Map());
+    customFpByAgent.get(r.agentId)!.set(r.category, r.rate);
   }
 
   return (
@@ -138,9 +148,12 @@ export default async function RunDetailPage({ params }: PageParams) {
       <section className="adm-section">
         <EditableFpTable
           runId={runId}
-          agents={agentRows}
-          categories={fpCategories}
-          ratesByAgent={fpByAgent}
+          llmAgents={agentRows}
+          llmCategories={fpCategories}
+          llmRatesByAgent={fpByAgent}
+          customAgents={customAgentRows}
+          customCategories={customFpCategories}
+          customRatesByAgent={customFpByAgent}
         />
       </section>
 
