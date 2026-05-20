@@ -101,7 +101,7 @@ export function Leaderboard({ agents, detect, exploit, title, lede }: Props) {
                   <thead>
                     <tr>
                       <th>Rank</th>
-                      <th>Agent</th>
+                      <th>Model</th>
                       <th>Vendor</th>
                       <th>F1 (95% CI)</th>
                       <th>Precision</th>
@@ -147,7 +147,7 @@ export function Leaderboard({ agents, detect, exploit, title, lede }: Props) {
                   <thead>
                     <tr>
                       <th>Rank</th>
-                      <th>Agent</th>
+                      <th>Model</th>
                       <th>Vendor</th>
                       <th>Outcome</th>
                       <th>Success</th>

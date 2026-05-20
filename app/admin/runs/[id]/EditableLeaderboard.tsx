@@ -150,7 +150,7 @@ function DetectTable({
       <thead>
         <tr>
           <th>Rank</th>
-          <th>Agent</th>
+          <th>Model</th>
           <th>Vendor</th>
           <th>F1 (95% CI)</th>
           <th className="num">Precision</th>
@@ -273,7 +273,7 @@ function ExploitTable({
       <thead>
         <tr>
           <th>Rank</th>
-          <th>Agent</th>
+          <th>Model</th>
           <th>Vendor</th>
           <th>Outcome</th>
           <th className="num">Success</th>
