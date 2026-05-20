@@ -16,6 +16,7 @@ import {
   customAgentFpRates,
 } from "@/db/schema";
 import { auth, isAdmin } from "@/auth";
+import { computeCost } from "@/lib/pricing";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { and, desc, eq } from "drizzle-orm";
@@ -615,7 +616,10 @@ const trialSchema = z.object({
   tp_findings: z.number().nullable().optional(),
   fp_findings_estimate: z.number().nullable().optional(),
   fn_findings: z.number().nullable().optional(),
+  input_tokens: z.number().nullable().optional(),
+  output_tokens: z.number().nullable().optional(),
   reasoning_tokens: z.number().nullable().optional(),
+  cached_tokens: z.number().nullable().optional(),
   ts: z.string().optional(),
 }).passthrough();
 
@@ -629,12 +633,29 @@ function colorForKey(key: string): string {
   return DEFAULT_PALETTE[h % DEFAULT_PALETTE.length];
 }
 function vendorFromModel(model: string): string {
-  if (model.startsWith("openai/")) return "OpenAI";
-  if (model.startsWith("anthropic/") || model.includes("claude")) return "Anthropic";
-  if (model.startsWith("google/") || model.includes("gemini")) return "Google";
-  if (model.startsWith("deepseek/") || model.includes("deepseek")) return "DeepSeek";
-  if (model.startsWith("alibaba/") || model.includes("qwen")) return "Alibaba";
-  if (model.startsWith("meta/") || model.includes("llama")) return "Meta";
+  const m = model.toLowerCase();
+  // OpenRouter-style prefixes
+  if (m.startsWith("openai/")) return "OpenAI";
+  if (m.startsWith("anthropic/")) return "Anthropic";
+  if (m.startsWith("google/")) return "Google";
+  if (m.startsWith("deepseek/")) return "DeepSeek";
+  if (m.startsWith("alibaba/") || m.startsWith("qwen/")) return "Alibaba";
+  if (m.startsWith("meta/") || m.startsWith("meta-llama/")) return "Meta";
+  if (m.startsWith("mistralai/") || m.startsWith("mistral/")) return "Mistral";
+  if (m.startsWith("x-ai/")) return "xAI";
+  if (m.startsWith("cohere/")) return "Cohere";
+  if (m.startsWith("perplexity/")) return "Perplexity";
+  // Bare model names (no provider prefix) — match by substring
+  if (m.includes("claude")) return "Anthropic";
+  if (m.includes("gpt") || /\bo[134]\b/.test(m) || m.includes("openai")) return "OpenAI";
+  if (m.includes("gemini") || m.includes("palm") || m.includes("bard")) return "Google";
+  if (m.includes("deepseek")) return "DeepSeek";
+  if (m.includes("qwen")) return "Alibaba";
+  if (m.includes("llama")) return "Meta";
+  if (m.includes("mistral") || m.includes("mixtral")) return "Mistral";
+  if (m.includes("grok")) return "xAI";
+  if (m.includes("command-r") || m.includes("command-")) return "Cohere";
+  // Fallback: take any slash prefix
   const slash = model.indexOf("/");
   if (slash > 0) return model.slice(0, slash).replace(/^./, (c) => c.toUpperCase());
   return "Unknown";
@@ -779,22 +800,38 @@ export async function importTrialResults(
       }
     }
 
-    // 2) APPEND every trial to raw_trials (never overwrites — that's how accumulation works)
+    // 2) APPEND every trial to raw_trials (never overwrites — that's how accumulation works).
+    //    If cost_usd is null in the trial, auto-compute from token counts using the model's
+    //    pricing table. If pricing is unknown for the model, leave costUsd null.
     if (pendings.length) {
       await tx.insert(rawTrials).values(
-        pendings.map((p) => ({
-          agentId: p.agentKey,
-          mode: p.mode,
-          task: p.raw.task ?? null,
-          tpFindings: p.raw.tp_findings ?? null,
-          fpFindings: p.raw.fp_findings_estimate ?? null,
-          fnFindings: p.raw.fn_findings ?? null,
-          label: p.raw.label ?? null,
-          costUsd: p.raw.cost_usd ?? null,
-          reasoningTokens: p.raw.reasoning_tokens ?? null,
-          ts: p.raw.ts ?? null,
-          sourceRunId: p.raw.run_id ?? null,
-        }))
+        pendings.map((p) => {
+          const explicitCost = p.raw.cost_usd ?? null;
+          const autoCost = explicitCost === null
+            ? computeCost(p.raw.model ?? p.agentKey, {
+                input: p.raw.input_tokens,
+                output: p.raw.output_tokens,
+                reasoning: p.raw.reasoning_tokens,
+                cached: p.raw.cached_tokens,
+              })
+            : null;
+          return {
+            agentId: p.agentKey,
+            mode: p.mode,
+            task: p.raw.task ?? null,
+            tpFindings: p.raw.tp_findings ?? null,
+            fpFindings: p.raw.fp_findings_estimate ?? null,
+            fnFindings: p.raw.fn_findings ?? null,
+            label: p.raw.label ?? null,
+            costUsd: explicitCost !== null ? explicitCost : autoCost,
+            inputTokens: p.raw.input_tokens ?? null,
+            outputTokens: p.raw.output_tokens ?? null,
+            reasoningTokens: p.raw.reasoning_tokens ?? null,
+            cachedTokens: p.raw.cached_tokens ?? null,
+            ts: p.raw.ts ?? null,
+            sourceRunId: p.raw.run_id ?? null,
+          };
+        })
       );
     }
 

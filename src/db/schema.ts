@@ -180,7 +180,10 @@ export const rawTrials = pgTable("raw_trials", {
   label: text("label"),
   // Both
   costUsd: real("cost_usd"),
+  inputTokens: integer("input_tokens"),
+  outputTokens: integer("output_tokens"),
   reasoningTokens: integer("reasoning_tokens"),
+  cachedTokens: integer("cached_tokens"),
   ts: text("ts"),
   sourceRunId: text("source_run_id"),
   importedAt: timestamp("imported_at", { withTimezone: true }).defaultNow().notNull(),
