@@ -54,10 +54,10 @@ export function Hero({ stats, eyebrow, title, description }: Props) {
         <div className="section-eyebrow" style={{ color: "var(--accent-hi)" }}>
           {eyebrow}
         </div>
-        <h1 style={{ fontSize: 56, margin: "10px 0 0", letterSpacing: "-0.03em" }}>
+        <h1 style={{ fontSize: "clamp(34px, 7vw, 56px)", margin: "10px 0 0", letterSpacing: "-0.03em", lineHeight: 1.1 }}>
           {title}
         </h1>
-        <p className="lede" style={{ marginTop: 14, maxWidth: "64ch" }}>
+        <p className="lede" style={{ marginTop: 14, maxWidth: "64ch", fontSize: "clamp(14px, 2.6vw, 15px)" }}>
           {renderInline(description)}
         </p>
 

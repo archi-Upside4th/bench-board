@@ -654,24 +654,97 @@
     .hm { grid-template-columns: 160px repeat(7, minmax(0,1fr)); }
   }
   @media (max-width: 720px) {
+    /* ---------- Layout: drop snap + full-screen sections on mobile ---------- */
+    html { scroll-snap-type: none; }
+    section {
+      min-height: auto;
+      display: block;
+      padding: 56px 0;
+      scroll-snap-align: none;
+    }
+    section.first {
+      padding-top: 88px;
+      padding-bottom: 64px;
+      min-height: auto;
+      display: block;
+    }
     .wrap { padding: 0 18px; }
-    .site-inner { padding: 14px 18px; gap: 12px; flex-wrap: wrap; }
+
+    /* ---------- Header ---------- */
+    .site-inner { padding: 14px 18px; gap: 10px; flex-wrap: wrap; }
     .sub { display: none; }
-    .hero { grid-template-columns: 1fr 1fr; }
-    .stat .v { font-size: 30px; }
-    section { padding: 48px 0; }
+    .meta-pill { font-size: 10.5px; padding: 4px 8px; }
+    .wordmark { font-size: 15px; }
+    .ghost-btn, .primary-btn { height: 30px; padding: 0 12px; font-size: 12px; }
+
+    /* ---------- Hero ---------- */
+    .hero { grid-template-columns: 1fr; gap: 12px; margin-top: 40px; }
+    .stat { padding: 18px 20px; }
+    .stat .v { font-size: 32px; }
+    .stat .v small { font-size: 16px; }
+
+    /* ---------- Section heads ---------- */
+    .section-head { flex-direction: column; align-items: flex-start; gap: 14px; }
+    h2 { font-size: 19px; }
+    .lede { font-size: 13.5px; }
+
+    /* ---------- Leaderboard table: horizontal scroll ---------- */
     .lb-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-    /* Mobile: let columns size to content + force a min-width so the cells don't squish.
-       lb-card has overflow:hidden for the rounded border; the inner lb-scroll handles
-       horizontal scroll. */
     table.lb { table-layout: auto; min-width: 760px; }
     .lb-card { overflow: hidden; }
     .lb-card .lb-pane,
     .lb-card .lb-stack { overflow: visible; }
-    .lb-card .lb-scroll { -ms-overflow-style: -ms-autohiding-scrollbar; }
     .bar-inline { width: 70px; }
-    .fp-row, .fp-axis { grid-template-columns: 140px 1fr 50px; }
+
+    /* ---------- FP rate chart ---------- */
+    .fp-card { padding: 4px 12px 12px; }
+    .fp-head,
+    .fp-axis,
+    .fp-row { grid-template-columns: 130px 1fr 56px; gap: 10px; }
+    .fp-cat { font-size: 12px; gap: 6px; }
+    .fp-cat .ix { display: none; }
+    .fp-cat .agent-name { font-size: 12px; }
+    .fp-track { height: 18px; }
+    .fp-mean { font-size: 12.5px; }
+    .fp-axis .axis-ticks span { font-size: 9.5px; }
+
+    /* ---------- Pareto / Reasoning chart ---------- */
+    .grid-2 { grid-template-columns: 1fr; gap: 20px; }
+    .chart-card { padding: 16px; }
+    .commentary .quote { font-size: 13px; padding-left: 12px; }
+
+    /* ---------- Methodology ---------- */
+    .methodology { gap: 24px; }
+    .method-row {
+      grid-template-columns: 1fr;
+      gap: 4px;
+      padding: 12px 0;
+    }
+    .method-row .k { font-size: 11px; }
+    .method-row .v { font-size: 13px; }
+    .cite-card { font-size: 10.5px; padding: 14px; }
+
+    /* ---------- Footer ---------- */
+    footer.foot .row {
+      flex-direction: column;
+      gap: 8px;
+      align-items: flex-start;
+    }
+
+    /* ---------- Heatmap (kept for legacy) ---------- */
     .hm { grid-template-columns: 120px repeat(7, minmax(40px, 1fr)); font-size: 11px; }
+
+    /* ---------- Admin floating bar — keep visible but compact ---------- */
+    /* AdminQuickBar uses inline styles; nothing to override here. */
+  }
+
+  @media (max-width: 420px) {
+    /* Tighten further on very small phones */
+    .wrap { padding: 0 14px; }
+    .stat { padding: 14px 16px; }
+    .stat .v { font-size: 28px; }
+    .meta-pill { display: none; }
+    .ghost-btn[href*="github" i] { font-size: 11px; padding: 0 10px; }
   }
 
   /* ============================ Admin UI ============================ */
