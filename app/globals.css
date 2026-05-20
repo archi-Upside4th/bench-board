@@ -660,7 +660,16 @@
     .hero { grid-template-columns: 1fr 1fr; }
     .stat .v { font-size: 30px; }
     section { padding: 48px 0; }
-    .lb-scroll { overflow-x: auto; }
+    .lb-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    /* Mobile: let columns size to content + force a min-width so the cells don't squish.
+       lb-card has overflow:hidden for the rounded border; the inner lb-scroll handles
+       horizontal scroll. */
+    table.lb { table-layout: auto; min-width: 760px; }
+    .lb-card { overflow: hidden; }
+    .lb-card .lb-pane,
+    .lb-card .lb-stack { overflow: visible; }
+    .lb-card .lb-scroll { -ms-overflow-style: -ms-autohiding-scrollbar; }
+    .bar-inline { width: 70px; }
     .fp-row, .fp-axis { grid-template-columns: 140px 1fr 50px; }
     .hm { grid-template-columns: 120px repeat(7, minmax(40px, 1fr)); font-size: 11px; }
   }
