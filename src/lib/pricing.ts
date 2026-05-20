@@ -99,10 +99,15 @@ export function lookupPricing(model: string): Pricing | null {
 /**
  * Compute cost in USD for one trial.
  *
- * Convention (matches OpenAI usage stats):
- *   billed_input = input_tokens - cached_tokens       (fresh input at input rate)
- *   billed_cached = cached_tokens                     (at cached rate)
- *   billed_output = output_tokens + reasoning_tokens  (reasoning billed as output)
+ * Convention (matches OpenAI / OpenRouter usage stats):
+ *   - `output_tokens` ALREADY INCLUDES `reasoning_tokens` (reasoning is just
+ *     a breakdown of the output). Don't add reasoning again — it'd double-count.
+ *   - `input_tokens` ALREADY INCLUDES `cached_tokens`. The cached portion
+ *     is billed at the cached rate; the rest at the input rate.
+ *
+ *   billed_input  = input_tokens - cached_tokens        × input_price
+ *   billed_cached = cached_tokens                       × cached_price
+ *   billed_output = output_tokens                       × output_price
  */
 export function computeCost(
   model: string,
@@ -112,11 +117,11 @@ export function computeCost(
   if (!p) return null;
   const input = tokens.input ?? 0;
   const output = tokens.output ?? 0;
-  const reasoning = tokens.reasoning ?? 0;
   const cached = Math.min(tokens.cached ?? 0, input);
   const freshInput = Math.max(0, input - cached);
   const cachedRate = p.cachedInput ?? p.input * 0.5;
-  const totalOutput = output + reasoning;
-  const cost = (freshInput * p.input + cached * cachedRate + totalOutput * p.output) / 1_000_000;
+  // reasoning_tokens is intentionally ignored — already inside output_tokens per
+  // OpenAI/OpenRouter convention.
+  const cost = (freshInput * p.input + cached * cachedRate + output * p.output) / 1_000_000;
   return cost;
 }

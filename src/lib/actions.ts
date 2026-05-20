@@ -788,17 +788,26 @@ export async function importTrialResults(
   }
 
   await db.transaction(async (tx) => {
-    // 1) Ensure agents exist
+    // 1) Ensure agents exist. For new agents, auto-detect vendor.
+    //    For EXISTING agents, only update vendor if it's currently 'Unknown'
+    //    (or empty) and we can do better — so we don't overwrite an admin's
+    //    manual edits.
     for (const agentKey of uniqueAgents) {
       const [existing] = await tx.select().from(agents).where(eq(agents.id, agentKey)).limit(1);
+      const detectedVendor = vendorFromModel(agentKey);
       if (!existing) {
         await tx.insert(agents).values({
           id: agentKey,
-          vendor: vendorFromModel(agentKey),
+          vendor: detectedVendor,
           releaseDate: new Date().toISOString().slice(0, 7),
           color: colorForKey(agentKey),
         }).onConflictDoNothing();
         summary.agentsCreated.push(agentKey);
+      } else if (
+        detectedVendor !== "Unknown" &&
+        (!existing.vendor || existing.vendor === "Unknown")
+      ) {
+        await tx.update(agents).set({ vendor: detectedVendor }).where(eq(agents.id, agentKey));
       }
     }
 
