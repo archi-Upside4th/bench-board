@@ -38,8 +38,6 @@ export function AgentRanking({ agents, detect, exploit, title, lede }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const isEmpty = detect.length === 0 && exploit.length === 0;
-
   return (
     <section>
       <div className="wrap">
@@ -48,37 +46,35 @@ export function AgentRanking({ agents, detect, exploit, title, lede }: Props) {
             <h2>{title}</h2>
             <p className="lede">{lede}</p>
           </div>
-          {isEmpty ? null : (
-            <div className="tabs has-slider" role="tablist" ref={tabsRef}>
-              <span
-                className="tab-slider"
-                aria-hidden="true"
-                style={{
-                  transform: `translateX(${indicator.x}px)`,
-                  width: indicator.w,
-                  opacity: indicator.ready ? 1 : 0,
-                }}
-              />
-              <button
-                ref={detectBtnRef}
-                className="tab"
-                role="tab"
-                aria-selected={mode === "detect"}
-                onClick={() => setMode("detect")}
-              >
-                Detect <span className="count">{detect.length}</span>
-              </button>
-              <button
-                ref={exploitBtnRef}
-                className="tab"
-                role="tab"
-                aria-selected={mode === "exploit"}
-                onClick={() => setMode("exploit")}
-              >
-                Exploit <span className="count">{exploit.length}</span>
-              </button>
-            </div>
-          )}
+          <div className="tabs has-slider" role="tablist" ref={tabsRef}>
+            <span
+              className="tab-slider"
+              aria-hidden="true"
+              style={{
+                transform: `translateX(${indicator.x}px)`,
+                width: indicator.w,
+                opacity: indicator.ready ? 1 : 0,
+              }}
+            />
+            <button
+              ref={detectBtnRef}
+              className="tab"
+              role="tab"
+              aria-selected={mode === "detect"}
+              onClick={() => setMode("detect")}
+            >
+              Detect <span className="count">{detect.length}</span>
+            </button>
+            <button
+              ref={exploitBtnRef}
+              className="tab"
+              role="tab"
+              aria-selected={mode === "exploit"}
+              onClick={() => setMode("exploit")}
+            >
+              Exploit <span className="count">{exploit.length}</span>
+            </button>
+          </div>
         </div>
 
         <div className="lb-card">
