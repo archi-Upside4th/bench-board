@@ -12,6 +12,7 @@ import {
   reasoningPoints,
   customAgents,
   customAgentResults,
+  customAgentExploitResults,
 } from "@/db/schema";
 import { auth, isAdmin } from "@/auth";
 import { revalidatePath } from "next/cache";
@@ -979,6 +980,52 @@ export async function deleteCustomAgentRow(input: z.input<typeof rowKeySchema>) 
   await db
     .delete(customAgentResults)
     .where(and(eq(customAgentResults.runId, runId), eq(customAgentResults.agentId, agentId)));
+  bustCaches();
+}
+
+/* --- Custom agent exploit-mode CRUD --- */
+
+const customAgentExploitCellSchema = z.object({
+  runId: z.number().int(),
+  agentId: z.string(),
+  field: z.enum(["success", "partial", "fail", "costUsdPerTask", "nTasks"]),
+  value: z.number(),
+});
+
+export async function updateCustomAgentExploitCell(input: z.input<typeof customAgentExploitCellSchema>) {
+  await assertAdmin();
+  const { runId, agentId, field, value } = customAgentExploitCellSchema.parse(input);
+  await db
+    .update(customAgentExploitResults)
+    .set({ [field]: value })
+    .where(and(eq(customAgentExploitResults.runId, runId), eq(customAgentExploitResults.agentId, agentId)));
+  bustCaches();
+}
+
+export async function addCustomAgentExploitRow(input: z.input<typeof rowKeySchema>) {
+  await assertAdmin();
+  const { runId, agentId } = rowKeySchema.parse(input);
+  await db
+    .insert(customAgentExploitResults)
+    .values({
+      runId,
+      agentId,
+      success: 0,
+      partial: 0,
+      fail: 0,
+      costUsdPerTask: 0,
+      nTasks: 0,
+    })
+    .onConflictDoNothing();
+  bustCaches();
+}
+
+export async function deleteCustomAgentExploitRow(input: z.input<typeof rowKeySchema>) {
+  await assertAdmin();
+  const { runId, agentId } = rowKeySchema.parse(input);
+  await db
+    .delete(customAgentExploitResults)
+    .where(and(eq(customAgentExploitResults.runId, runId), eq(customAgentExploitResults.agentId, agentId)));
   bustCaches();
 }
 

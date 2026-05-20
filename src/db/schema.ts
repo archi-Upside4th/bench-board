@@ -65,6 +65,7 @@ export const customAgents = pgTable("custom_agents", {
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
+// Detect-mode results for custom agents.
 export const customAgentResults = pgTable(
   "custom_agent_results",
   {
@@ -79,6 +80,25 @@ export const customAgentResults = pgTable(
     f1: real("f1").notNull(),
     f1CiLow: real("f1_ci_low").notNull(),
     f1CiHigh: real("f1_ci_high").notNull(),
+    costUsdPerTask: real("cost_usd_per_task").notNull(),
+    nTasks: integer("n_tasks").notNull(),
+  },
+  (t) => ({ pk: primaryKey({ columns: [t.runId, t.agentId] }) })
+);
+
+// Exploit-mode results for custom agents (success/partial/fail rates).
+export const customAgentExploitResults = pgTable(
+  "custom_agent_exploit_results",
+  {
+    runId: integer("run_id")
+      .notNull()
+      .references(() => evalRuns.id, { onDelete: "cascade" }),
+    agentId: text("agent_id")
+      .notNull()
+      .references(() => customAgents.id, { onDelete: "cascade" }),
+    success: real("success").notNull(),
+    partial: real("partial").notNull(),
+    fail: real("fail").notNull(),
     costUsdPerTask: real("cost_usd_per_task").notNull(),
     nTasks: integer("n_tasks").notNull(),
   },
@@ -254,3 +274,4 @@ export type RawTrial = typeof rawTrials.$inferSelect;
 export type ReasoningPoint = typeof reasoningPoints.$inferSelect;
 export type CustomAgent = typeof customAgents.$inferSelect;
 export type CustomAgentResult = typeof customAgentResults.$inferSelect;
+export type CustomAgentExploitResult = typeof customAgentExploitResults.$inferSelect;

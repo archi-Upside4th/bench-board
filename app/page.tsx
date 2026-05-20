@@ -46,7 +46,10 @@ export default async function Page() {
     );
   }
 
-  const { run, agents, detect, exploit, fpRows, fpCategories, reasoning, customAgents, customAgentResults } = data;
+  const {
+    run, agents, detect, exploit, fpRows, fpCategories, reasoning,
+    customAgents, customAgentResults, customAgentExploitResults,
+  } = data;
 
   return (
     <>
@@ -82,7 +85,8 @@ export default async function Page() {
         />
         <AgentRanking
           agents={customAgents}
-          results={customAgentResults}
+          detect={customAgentResults}
+          exploit={customAgentExploitResults}
           title={s.agentRankingTitle}
           lede={s.agentRankingLede}
         />

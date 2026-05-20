@@ -8,6 +8,7 @@ import {
   reasoningPoints,
   customAgents,
   customAgentResults,
+  customAgentExploitResults,
 } from "@/db/schema";
 import { desc, eq } from "drizzle-orm";
 
@@ -21,6 +22,7 @@ export type LeaderboardPayload = {
   reasoning: (typeof reasoningPoints.$inferSelect)[];
   customAgents: (typeof customAgents.$inferSelect)[];
   customAgentResults: (typeof customAgentResults.$inferSelect)[];
+  customAgentExploitResults: (typeof customAgentExploitResults.$inferSelect)[];
 };
 
 export async function getLatestRun(): Promise<LeaderboardPayload | null> {
@@ -33,7 +35,16 @@ export async function getLatestRun(): Promise<LeaderboardPayload | null> {
 
   if (!run) return null;
 
-  const [agentRows, detect, exploit, fps, reasoning, customAgentRows, customAgentResultsRows] = await Promise.all([
+  const [
+    agentRows,
+    detect,
+    exploit,
+    fps,
+    reasoning,
+    customAgentRows,
+    customAgentResultsRows,
+    customAgentExploitRows,
+  ] = await Promise.all([
     db.select().from(agents),
     db.select().from(detectResults).where(eq(detectResults.runId, run.id)),
     db.select().from(exploitResults).where(eq(exploitResults.runId, run.id)),
@@ -41,6 +52,7 @@ export async function getLatestRun(): Promise<LeaderboardPayload | null> {
     db.select().from(reasoningPoints).where(eq(reasoningPoints.runId, run.id)),
     db.select().from(customAgents),
     db.select().from(customAgentResults).where(eq(customAgentResults.runId, run.id)),
+    db.select().from(customAgentExploitResults).where(eq(customAgentExploitResults.runId, run.id)),
   ]);
 
   const categoriesSet = new Set<string>();
@@ -69,5 +81,6 @@ export async function getLatestRun(): Promise<LeaderboardPayload | null> {
     reasoning,
     customAgents: customAgentRows,
     customAgentResults: customAgentResultsRows,
+    customAgentExploitResults: customAgentExploitRows,
   };
 }

@@ -8,6 +8,7 @@ import {
   reasoningPoints,
   customAgents,
   customAgentResults,
+  customAgentExploitResults,
 } from "@/db/schema";
 import { eq, asc } from "drizzle-orm";
 import { notFound } from "next/navigation";
@@ -33,7 +34,16 @@ export default async function RunDetailPage({ params }: PageParams) {
   const [run] = await db.select().from(evalRuns).where(eq(evalRuns.id, runId)).limit(1);
   if (!run) notFound();
 
-  const [agentRows, detect, exploit, fps, reasoning, customAgentRows, customResults] = await Promise.all([
+  const [
+    agentRows,
+    detect,
+    exploit,
+    fps,
+    reasoning,
+    customAgentRows,
+    customResults,
+    customExploit,
+  ] = await Promise.all([
     db.select().from(agents).orderBy(asc(agents.id)),
     db.select().from(detectResults).where(eq(detectResults.runId, runId)),
     db.select().from(exploitResults).where(eq(exploitResults.runId, runId)),
@@ -41,6 +51,7 @@ export default async function RunDetailPage({ params }: PageParams) {
     db.select().from(reasoningPoints).where(eq(reasoningPoints.runId, runId)),
     db.select().from(customAgents).orderBy(asc(customAgents.id)),
     db.select().from(customAgentResults).where(eq(customAgentResults.runId, runId)),
+    db.select().from(customAgentExploitResults).where(eq(customAgentExploitResults.runId, runId)),
   ]);
 
   const fpCategories = Array.from(new Set(fps.map((f) => f.category)));
@@ -119,7 +130,8 @@ export default async function RunDetailPage({ params }: PageParams) {
         <EditableAgentRanking
           runId={runId}
           agents={customAgentRows}
-          results={customResults}
+          detect={customResults}
+          exploit={customExploit}
         />
       </section>
 
