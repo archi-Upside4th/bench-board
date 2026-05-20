@@ -97,6 +97,9 @@ export function Leaderboard({ agents, detect, exploit, title, lede }: Props) {
           <div className="lb-stack">
             <div className={`lb-pane ${mode === "detect" ? "on" : ""}`} aria-hidden={mode !== "detect"}>
               <div className="lb-scroll">
+                {detectSorted.length === 0 ? (
+                  <Empty mode="Detect" />
+                ) : (
                 <table className="lb">
                   <thead>
                     <tr>
@@ -138,11 +141,15 @@ export function Leaderboard({ agents, detect, exploit, title, lede }: Props) {
                     })}
                   </tbody>
                 </table>
+                )}
               </div>
             </div>
 
             <div className={`lb-pane ${mode === "exploit" ? "on" : ""}`} aria-hidden={mode !== "exploit"}>
               <div className="lb-scroll">
+                {exploitSorted.length === 0 ? (
+                  <Empty mode="Exploit" />
+                ) : (
                 <table className="lb">
                   <thead>
                     <tr>
@@ -185,11 +192,22 @@ export function Leaderboard({ agents, detect, exploit, title, lede }: Props) {
                     })}
                   </tbody>
                 </table>
+                )}
               </div>
             </div>
           </div>
         </div>
       </div>
     </section>
+  );
+}
+
+function Empty({ mode }: { mode: string }) {
+  return (
+    <div style={{ padding: 36, textAlign: "center", color: "var(--mute)", fontSize: 13.5, lineHeight: 1.6 }}>
+      No {mode} results for this run yet.
+      <br />
+      Add them in <a href="/admin">admin</a> → open the run → <b>LLM ranking</b> section.
+    </div>
   );
 }
