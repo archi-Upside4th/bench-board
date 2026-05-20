@@ -4,6 +4,7 @@ import { auth, isAdmin } from "@/auth";
 import { Header } from "./components/Header";
 import { Hero } from "./components/Hero";
 import { Leaderboard } from "./components/Leaderboard";
+import { AgentRanking } from "./components/AgentRanking";
 import { ParetoChart } from "./components/ParetoChart";
 import { FpAnalysis } from "./components/FpAnalysis";
 import { Methodology } from "./components/Methodology";
@@ -45,7 +46,7 @@ export default async function Page() {
     );
   }
 
-  const { run, agents, detect, exploit, fpRows, fpCategories, reasoning } = data;
+  const { run, agents, detect, exploit, fpRows, fpCategories, reasoning, customAgents, customAgentResults } = data;
 
   return (
     <>
@@ -78,6 +79,12 @@ export default async function Page() {
           exploit={exploit}
           title={s.leaderboardTitle}
           lede={s.leaderboardLede}
+        />
+        <AgentRanking
+          agents={customAgents}
+          results={customAgentResults}
+          title={s.agentRankingTitle}
+          lede={s.agentRankingLede}
         />
         <FpAnalysis
           agents={agents}

@@ -10,6 +10,8 @@ import {
   siteSettings,
   rawTrials,
   reasoningPoints,
+  customAgents,
+  customAgentResults,
 } from "@/db/schema";
 import { auth, isAdmin } from "@/auth";
 import { revalidatePath } from "next/cache";
@@ -889,6 +891,94 @@ export async function clearAccumulatedTrials(opts: { targetRunId?: number } = {}
       await tx.delete(exploitResults).where(eq(exploitResults.runId, opts.targetRunId));
     }
   });
+  bustCaches();
+}
+
+/* ============================ Custom agents (Claude Code, Codex, …) ============================ */
+
+const customAgentSchema = z.object({
+  id: z.string().min(1).max(80),
+  vendor: z.string().min(1).max(80),
+  release_date: z.string().min(1).max(20),
+  color: z.string().regex(/^#[0-9A-Fa-f]{6}$/, "Color must be a 6-digit hex value"),
+});
+
+export async function upsertCustomAgent(input: z.input<typeof customAgentSchema>) {
+  await assertAdmin();
+  const parsed = customAgentSchema.parse(input);
+  await db
+    .insert(customAgents)
+    .values({
+      id: parsed.id,
+      vendor: parsed.vendor,
+      releaseDate: parsed.release_date,
+      color: parsed.color,
+    })
+    .onConflictDoUpdate({
+      target: customAgents.id,
+      set: { vendor: parsed.vendor, releaseDate: parsed.release_date, color: parsed.color },
+    });
+  bustCaches();
+}
+
+export async function deleteCustomAgent(id: string) {
+  await assertAdmin();
+  if (!id) return;
+  await db.delete(customAgents).where(eq(customAgents.id, id));
+  bustCaches();
+}
+
+const customAgentCellSchema = z.object({
+  runId: z.number().int(),
+  agentId: z.string(),
+  field: z.enum([
+    "precision",
+    "recall",
+    "f1",
+    "f1CiLow",
+    "f1CiHigh",
+    "costUsdPerTask",
+    "nTasks",
+  ]),
+  value: z.number(),
+});
+
+export async function updateCustomAgentCell(input: z.input<typeof customAgentCellSchema>) {
+  await assertAdmin();
+  const { runId, agentId, field, value } = customAgentCellSchema.parse(input);
+  await db
+    .update(customAgentResults)
+    .set({ [field]: value })
+    .where(and(eq(customAgentResults.runId, runId), eq(customAgentResults.agentId, agentId)));
+  bustCaches();
+}
+
+export async function addCustomAgentRow(input: z.input<typeof rowKeySchema>) {
+  await assertAdmin();
+  const { runId, agentId } = rowKeySchema.parse(input);
+  await db
+    .insert(customAgentResults)
+    .values({
+      runId,
+      agentId,
+      precision: 0,
+      recall: 0,
+      f1: 0,
+      f1CiLow: 0,
+      f1CiHigh: 0,
+      costUsdPerTask: 0,
+      nTasks: 0,
+    })
+    .onConflictDoNothing();
+  bustCaches();
+}
+
+export async function deleteCustomAgentRow(input: z.input<typeof rowKeySchema>) {
+  await assertAdmin();
+  const { runId, agentId } = rowKeySchema.parse(input);
+  await db
+    .delete(customAgentResults)
+    .where(and(eq(customAgentResults.runId, runId), eq(customAgentResults.agentId, agentId)));
   bustCaches();
 }
 

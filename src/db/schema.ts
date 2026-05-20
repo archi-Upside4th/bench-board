@@ -54,6 +54,38 @@ export const detectResults = pgTable(
 );
 
 /**
+ * Custom coding agents (Claude Code, Codex, V12, Sherlock, etc.) —
+ * separate from raw LLM `agents` so they can be ranked independently.
+ */
+export const customAgents = pgTable("custom_agents", {
+  id: text("id").primaryKey(),
+  vendor: text("vendor").notNull(),
+  releaseDate: text("release_date").notNull(),
+  color: text("color").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const customAgentResults = pgTable(
+  "custom_agent_results",
+  {
+    runId: integer("run_id")
+      .notNull()
+      .references(() => evalRuns.id, { onDelete: "cascade" }),
+    agentId: text("agent_id")
+      .notNull()
+      .references(() => customAgents.id, { onDelete: "cascade" }),
+    precision: real("precision").notNull(),
+    recall: real("recall").notNull(),
+    f1: real("f1").notNull(),
+    f1CiLow: real("f1_ci_low").notNull(),
+    f1CiHigh: real("f1_ci_high").notNull(),
+    costUsdPerTask: real("cost_usd_per_task").notNull(),
+    nTasks: integer("n_tasks").notNull(),
+  },
+  (t) => ({ pk: primaryKey({ columns: [t.runId, t.agentId] }) })
+);
+
+/**
  * Standalone reasoning-effort vs F1 data — fully decoupled from
  * detect_results so admins can populate it independently (different
  * agents, different cadence). Powers the Pareto/Reasoning frontier chart.
@@ -163,9 +195,15 @@ export const siteSettings = pgTable("site_settings", {
   heroStat4Label: text("hero_stat_4_label").notNull().default("Trials per task"),
 
   // Section H2 titles
-  leaderboardTitle: text("leaderboard_title").notNull().default("Agent ranking"),
+  leaderboardTitle: text("leaderboard_title").notNull().default("LLM ranking"),
   leaderboardLede: text("leaderboard_lede").notNull().default(
     "Switch modes to compare detection F1 vs exploit success rate. Confidence intervals from 3 trials × bootstrap."
+  ),
+
+  // Custom-agent (Claude Code / Codex / etc.) ranking section
+  agentRankingTitle: text("agent_ranking_title").notNull().default("Agent ranking"),
+  agentRankingLede: text("agent_ranking_lede").notNull().default(
+    "Custom coding agents and frameworks built on top of LLMs — Claude Code, Codex, V12, Sherlock, etc."
   ),
 
   paretoTitle: text("pareto_title").notNull().default("Reasoning frontier"),
@@ -214,3 +252,5 @@ export type FpRate = typeof fpRates.$inferSelect;
 export type SiteSettings = typeof siteSettings.$inferSelect;
 export type RawTrial = typeof rawTrials.$inferSelect;
 export type ReasoningPoint = typeof reasoningPoints.$inferSelect;
+export type CustomAgent = typeof customAgents.$inferSelect;
+export type CustomAgentResult = typeof customAgentResults.$inferSelect;
