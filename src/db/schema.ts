@@ -255,7 +255,7 @@ export const siteSettings = pgTable("site_settings", {
 
   fpTitle: text("fp_title").notNull().default("FP rate on hardened decoys"),
   fpLede: text("fp_lede").notNull().default(
-    "Lower is better. Mean false-positive rate per agent across the negative categories."
+    "Lower is better. How often each model raises a vulnerability that isn't actually there."
   ),
 
   methodologyTitle: text("methodology_title").notNull().default("How agents are evaluated"),
