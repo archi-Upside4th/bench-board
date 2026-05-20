@@ -5,6 +5,7 @@ import {
   detectResults,
   exploitResults,
   fpRates,
+  reasoningPoints,
 } from "@/db/schema";
 import { eq, asc } from "drizzle-orm";
 import { notFound } from "next/navigation";
@@ -14,6 +15,7 @@ import { RunMetaIntCell } from "./RunMetaCell";
 import { RunActions } from "./RunActions";
 import { EditableLeaderboard } from "./EditableLeaderboard";
 import { EditableFpTable } from "./EditableFpTable";
+import { EditableReasoningTable } from "./EditableReasoningTable";
 import { updateRunMetaText } from "@/lib/actions";
 
 export const dynamic = "force-dynamic";
@@ -28,11 +30,12 @@ export default async function RunDetailPage({ params }: PageParams) {
   const [run] = await db.select().from(evalRuns).where(eq(evalRuns.id, runId)).limit(1);
   if (!run) notFound();
 
-  const [agentRows, detect, exploit, fps] = await Promise.all([
+  const [agentRows, detect, exploit, fps, reasoning] = await Promise.all([
     db.select().from(agents).orderBy(asc(agents.id)),
     db.select().from(detectResults).where(eq(detectResults.runId, runId)),
     db.select().from(exploitResults).where(eq(exploitResults.runId, runId)),
     db.select().from(fpRates).where(eq(fpRates.runId, runId)),
+    db.select().from(reasoningPoints).where(eq(reasoningPoints.runId, runId)),
   ]);
 
   const fpCategories = Array.from(new Set(fps.map((f) => f.category)));
@@ -113,6 +116,14 @@ export default async function RunDetailPage({ params }: PageParams) {
           agents={agentRows}
           categories={fpCategories}
           ratesByAgent={fpByAgent}
+        />
+      </section>
+
+      <section className="adm-section">
+        <EditableReasoningTable
+          runId={runId}
+          agents={agentRows}
+          points={reasoning}
         />
       </section>
     </div>

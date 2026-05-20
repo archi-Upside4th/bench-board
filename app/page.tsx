@@ -45,7 +45,7 @@ export default async function Page() {
     );
   }
 
-  const { run, agents, detect, exploit, fpRows, fpCategories } = data;
+  const { run, agents, detect, exploit, fpRows, fpCategories, reasoning } = data;
 
   return (
     <>
@@ -88,7 +88,7 @@ export default async function Page() {
         />
         <ParetoChart
           agents={agents}
-          detect={detect}
+          reasoning={reasoning}
           title={s.paretoTitle}
           lede={s.paretoLede}
           quote={s.paretoQuote}

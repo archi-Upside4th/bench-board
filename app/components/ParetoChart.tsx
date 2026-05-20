@@ -1,11 +1,11 @@
 "use client";
 import { useMemo } from "react";
-import type { Agent, DetectResult } from "@/db/schema";
+import type { Agent, ReasoningPoint } from "@/db/schema";
 import { renderInline } from "@/lib/inline";
 
 type Props = {
   agents: Agent[];
-  detect: DetectResult[];
+  reasoning: ReasoningPoint[];
   title: string;
   lede: string;
   quote: string;
@@ -38,20 +38,18 @@ function fmtTokens(n: number): string {
   return String(n);
 }
 
-export function ParetoChart({ agents, detect, title, lede, quote, body }: Props) {
+export function ParetoChart({ agents, reasoning, title, lede, quote, body }: Props) {
   const byId = useMemo(() => new Map(agents.map((a) => [a.id, a])), [agents]);
 
-  // Only plot agents that have reasoning data
-  const points = detect
-    .filter((d) => typeof d.reasoningTokensPerTask === "number" && d.reasoningTokensPerTask > 0)
-    .map((d) => ({
-      id: d.agentId,
-      color: byId.get(d.agentId)?.color ?? "#888",
-      x: d.reasoningTokensPerTask as number,
-      y: d.f1,
+  const points = reasoning
+    .filter((r) => r.reasoningTokensPerTask > 0)
+    .map((r) => ({
+      id: r.agentId,
+      color: byId.get(r.agentId)?.color ?? "#888",
+      x: r.reasoningTokensPerTask,
+      y: r.f1,
     }));
 
-  // Frontier: agents that achieve the highest F1 for their level of effort or less
   const frontier = useMemo(() => {
     const sorted = [...points].sort((a, b) => a.x - b.x);
     const out: typeof points = [];
@@ -158,10 +156,10 @@ export function ParetoChart({ agents, detect, title, lede, quote, body }: Props)
                   lineHeight: 1.6,
                 }}
               >
-                No reasoning-token data yet for any agent.
+                No reasoning points yet for this run.
                 <br />
-                Import trials with a <code>reasoning_tokens</code> field
-                via <a href="/admin/runs/import-trials">Import</a> and they'll appear here.
+                Add them in <a href="/admin">admin</a> → open the run →
+                {" "}<b>Reasoning effort</b> section.
               </div>
             )}
           </div>

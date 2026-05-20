@@ -1,5 +1,5 @@
 import { db } from "@/db";
-import { agents, evalRuns, detectResults, exploitResults, fpRates } from "@/db/schema";
+import { agents, evalRuns, detectResults, exploitResults, fpRates, reasoningPoints } from "@/db/schema";
 import { desc, eq } from "drizzle-orm";
 
 export type LeaderboardPayload = {
@@ -9,6 +9,7 @@ export type LeaderboardPayload = {
   exploit: (typeof exploitResults.$inferSelect)[];
   fpRows: { agentId: string; values: { category: string; rate: number }[] }[];
   fpCategories: string[];
+  reasoning: (typeof reasoningPoints.$inferSelect)[];
 };
 
 export async function getLatestRun(): Promise<LeaderboardPayload | null> {
@@ -21,11 +22,12 @@ export async function getLatestRun(): Promise<LeaderboardPayload | null> {
 
   if (!run) return null;
 
-  const [agentRows, detect, exploit, fps] = await Promise.all([
+  const [agentRows, detect, exploit, fps, reasoning] = await Promise.all([
     db.select().from(agents),
     db.select().from(detectResults).where(eq(detectResults.runId, run.id)),
     db.select().from(exploitResults).where(eq(exploitResults.runId, run.id)),
     db.select().from(fpRates).where(eq(fpRates.runId, run.id)),
+    db.select().from(reasoningPoints).where(eq(reasoningPoints.runId, run.id)),
   ]);
 
   const categoriesSet = new Set<string>();
@@ -44,5 +46,5 @@ export async function getLatestRun(): Promise<LeaderboardPayload | null> {
     values,
   }));
 
-  return { run, agents: agentRows, detect, exploit, fpRows, fpCategories };
+  return { run, agents: agentRows, detect, exploit, fpRows, fpCategories, reasoning };
 }

@@ -9,6 +9,7 @@ import {
   fpRates,
   siteSettings,
   rawTrials,
+  reasoningPoints,
 } from "@/db/schema";
 import { auth, isAdmin } from "@/auth";
 import { revalidatePath } from "next/cache";
@@ -812,13 +813,6 @@ export async function importTrialResults(
       const nTasks = tasks.size || allTrials.length;
       const validCosts = allTrials.map((t) => t.costUsd).filter((c): c is number => typeof c === "number");
       const avgCost = validCosts.length ? validCosts.reduce((s, c) => s + c, 0) / validCosts.length : 0;
-      const validReasoning = allTrials
-        .map((t) => t.reasoningTokens)
-        .filter((r): r is number => typeof r === "number");
-      const avgReasoning = validReasoning.length
-        ? validReasoning.reduce((s, v) => s + v, 0) / validReasoning.length
-        : null;
-
       if (mode === "detect") {
         const tp = allTrials.reduce((s, t) => s + (t.tpFindings ?? 0), 0);
         const fp = allTrials.reduce((s, t) => s + (t.fpFindings ?? 0), 0);
@@ -835,7 +829,6 @@ export async function importTrialResults(
             precision, recall, f1,
             f1CiLow: f1, f1CiHigh: f1,
             costUsdPerTask: avgCost,
-            reasoningTokensPerTask: avgReasoning,
             nTasks,
           })
           .onConflictDoUpdate({
@@ -843,7 +836,6 @@ export async function importTrialResults(
             set: {
               precision, recall, f1, f1CiLow: f1, f1CiHigh: f1,
               costUsdPerTask: avgCost,
-              reasoningTokensPerTask: avgReasoning,
               nTasks,
             },
           });
@@ -897,6 +889,43 @@ export async function clearAccumulatedTrials(opts: { targetRunId?: number } = {}
       await tx.delete(exploitResults).where(eq(exploitResults.runId, opts.targetRunId));
     }
   });
+  bustCaches();
+}
+
+/* ============================ Reasoning points (decoupled) ============================ */
+
+const reasoningCellSchema = z.object({
+  runId: z.number().int(),
+  agentId: z.string(),
+  field: z.enum(["f1", "reasoningTokensPerTask", "nTasks"]),
+  value: z.number().nonnegative(),
+});
+export async function updateReasoningCell(input: z.input<typeof reasoningCellSchema>) {
+  await assertAdmin();
+  const { runId, agentId, field, value } = reasoningCellSchema.parse(input);
+  await db
+    .update(reasoningPoints)
+    .set({ [field]: value })
+    .where(and(eq(reasoningPoints.runId, runId), eq(reasoningPoints.agentId, agentId)));
+  bustCaches();
+}
+
+export async function addReasoningRow(input: z.input<typeof rowKeySchema>) {
+  await assertAdmin();
+  const { runId, agentId } = rowKeySchema.parse(input);
+  await db
+    .insert(reasoningPoints)
+    .values({ runId, agentId, f1: 0, reasoningTokensPerTask: 100, nTasks: 0 })
+    .onConflictDoNothing();
+  bustCaches();
+}
+
+export async function deleteReasoningRow(input: z.input<typeof rowKeySchema>) {
+  await assertAdmin();
+  const { runId, agentId } = rowKeySchema.parse(input);
+  await db
+    .delete(reasoningPoints)
+    .where(and(eq(reasoningPoints.runId, runId), eq(reasoningPoints.agentId, agentId)));
   bustCaches();
 }
 

@@ -48,8 +48,28 @@ export const detectResults = pgTable(
     f1CiLow: real("f1_ci_low").notNull(),
     f1CiHigh: real("f1_ci_high").notNull(),
     costUsdPerTask: real("cost_usd_per_task").notNull(),
-    reasoningTokensPerTask: real("reasoning_tokens_per_task"),
     nTasks: integer("n_tasks").notNull(),
+  },
+  (t) => ({ pk: primaryKey({ columns: [t.runId, t.agentId] }) })
+);
+
+/**
+ * Standalone reasoning-effort vs F1 data — fully decoupled from
+ * detect_results so admins can populate it independently (different
+ * agents, different cadence). Powers the Pareto/Reasoning frontier chart.
+ */
+export const reasoningPoints = pgTable(
+  "reasoning_points",
+  {
+    runId: integer("run_id")
+      .notNull()
+      .references(() => evalRuns.id, { onDelete: "cascade" }),
+    agentId: text("agent_id")
+      .notNull()
+      .references(() => agents.id, { onDelete: "cascade" }),
+    f1: real("f1").notNull(),
+    reasoningTokensPerTask: real("reasoning_tokens_per_task").notNull(),
+    nTasks: integer("n_tasks").notNull().default(0),
   },
   (t) => ({ pk: primaryKey({ columns: [t.runId, t.agentId] }) })
 );
@@ -193,3 +213,4 @@ export type ExploitResult = typeof exploitResults.$inferSelect;
 export type FpRate = typeof fpRates.$inferSelect;
 export type SiteSettings = typeof siteSettings.$inferSelect;
 export type RawTrial = typeof rawTrials.$inferSelect;
+export type ReasoningPoint = typeof reasoningPoints.$inferSelect;
