@@ -83,6 +83,7 @@ export default async function Page() {
           exploit={exploit}
           title={s.leaderboardTitle}
           lede={s.leaderboardLede}
+          isAdmin={showAdminBar}
         />
         <AgentRanking
           agents={customAgents}
@@ -90,6 +91,7 @@ export default async function Page() {
           exploit={customAgentExploitResults}
           title={s.agentRankingTitle}
           lede={s.agentRankingLede}
+          isAdmin={showAdminBar}
         />
         <FpAnalysis
           llmAgents={agents}
@@ -100,6 +102,7 @@ export default async function Page() {
           customRows={customFpRows}
           title={s.fpTitle}
           lede={s.fpLede}
+          isAdmin={showAdminBar}
         />
         <ParetoChart
           agents={agents}
@@ -108,6 +111,7 @@ export default async function Page() {
           lede={s.paretoLede}
           quote={s.paretoQuote}
           body={s.paretoBody}
+          isAdmin={showAdminBar}
         />
         <Methodology
           run={run}

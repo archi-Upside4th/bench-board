@@ -8,9 +8,10 @@ type Props = {
   exploit: ExploitResult[];
   title: string;
   lede: string;
+  isAdmin?: boolean;
 };
 
-export function Leaderboard({ agents, detect, exploit, title, lede }: Props) {
+export function Leaderboard({ agents, detect, exploit, title, lede, isAdmin }: Props) {
   const [mode, setMode] = useState<"detect" | "exploit">("detect");
   const byId = useMemo(() => new Map(agents.map((a) => [a.id, a])), [agents]);
 
@@ -98,7 +99,7 @@ export function Leaderboard({ agents, detect, exploit, title, lede }: Props) {
             <div className={`lb-pane ${mode === "detect" ? "on" : ""}`} aria-hidden={mode !== "detect"}>
               <div className="lb-scroll">
                 {detectSorted.length === 0 ? (
-                  <Empty mode="Detect" />
+                  <Empty mode="Detect" isAdmin={isAdmin} />
                 ) : (
                 <table className="lb">
                   <thead>
@@ -148,7 +149,7 @@ export function Leaderboard({ agents, detect, exploit, title, lede }: Props) {
             <div className={`lb-pane ${mode === "exploit" ? "on" : ""}`} aria-hidden={mode !== "exploit"}>
               <div className="lb-scroll">
                 {exploitSorted.length === 0 ? (
-                  <Empty mode="Exploit" />
+                  <Empty mode="Exploit" isAdmin={isAdmin} />
                 ) : (
                 <table className="lb">
                   <thead>
@@ -202,12 +203,16 @@ export function Leaderboard({ agents, detect, exploit, title, lede }: Props) {
   );
 }
 
-function Empty({ mode }: { mode: string }) {
+function Empty({ mode, isAdmin }: { mode: string; isAdmin?: boolean }) {
   return (
     <div style={{ padding: 36, textAlign: "center", color: "var(--mute)", fontSize: 13.5, lineHeight: 1.6 }}>
-      No {mode} results for this run yet.
-      <br />
-      Add them in <a href="/admin">admin</a> → open the run → <b>LLM ranking</b> section.
+      No {mode} results yet.
+      {isAdmin ? (
+        <>
+          <br />
+          Add them in <a href="/admin">admin</a> → open the run → <b>LLM ranking</b> section.
+        </>
+      ) : null}
     </div>
   );
 }

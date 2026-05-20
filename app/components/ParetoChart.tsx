@@ -10,6 +10,7 @@ type Props = {
   lede: string;
   quote: string;
   body: string;
+  isAdmin?: boolean;
 };
 
 const W = 520;
@@ -38,7 +39,7 @@ function fmtTokens(n: number): string {
   return String(n);
 }
 
-export function ParetoChart({ agents, reasoning, title, lede, quote, body }: Props) {
+export function ParetoChart({ agents, reasoning, title, lede, quote, body, isAdmin }: Props) {
   const byId = useMemo(() => new Map(agents.map((a) => [a.id, a])), [agents]);
 
   const points = reasoning
@@ -156,10 +157,14 @@ export function ParetoChart({ agents, reasoning, title, lede, quote, body }: Pro
                   lineHeight: 1.6,
                 }}
               >
-                No reasoning points yet for this run.
-                <br />
-                Add them in <a href="/admin">admin</a> → open the run →
-                {" "}<b>Reasoning effort</b> section.
+                No reasoning data yet.
+                {isAdmin ? (
+                  <>
+                    <br />
+                    Add it in <a href="/admin">admin</a> → open the run →
+                    {" "}<b>Reasoning effort</b> section.
+                  </>
+                ) : null}
               </div>
             )}
           </div>

@@ -14,6 +14,7 @@ type Props = {
   customRows: Row[];
   title: string;
   lede: string;
+  isAdmin?: boolean;
 };
 
 const MAX = 1.0;
@@ -28,6 +29,7 @@ export function FpAnalysis({
   customRows,
   title,
   lede,
+  isAdmin,
 }: Props) {
   const [mode, setMode] = useState<"llm" | "agent">("llm");
 
@@ -94,9 +96,9 @@ export function FpAnalysis({
         <div className="lb-card fp-card">
           <FpHead />
           {mode === "llm" ? (
-            <FpBars agents={llmAgents} categories={llmCategories} rows={llmRows} emptyLabel="LLM" />
+            <FpBars agents={llmAgents} categories={llmCategories} rows={llmRows} emptyLabel="LLM" isAdmin={isAdmin} />
           ) : (
-            <FpBars agents={customAgents} categories={customCategories} rows={customRows} emptyLabel="Agent" />
+            <FpBars agents={customAgents} categories={customCategories} rows={customRows} emptyLabel="Agent" isAdmin={isAdmin} />
           )}
         </div>
       </div>
@@ -130,11 +132,13 @@ function FpBars({
   categories,
   rows,
   emptyLabel,
+  isAdmin,
 }: {
   agents: AnyAgent[];
   categories: string[];
   rows: Row[];
   emptyLabel: string;
+  isAdmin?: boolean;
 }) {
   const byId = useMemo(() => new Map(agents.map((a) => [a.id, a])), [agents]);
   const means = useMemo(() => {
@@ -150,9 +154,13 @@ function FpBars({
   if (means.length === 0 || categories.length === 0) {
     return (
       <div style={{ padding: 36, textAlign: "center", color: "var(--mute)", fontSize: 13.5, lineHeight: 1.6 }}>
-        No {emptyLabel} FP data for this run yet.
-        <br />
-        Add it in <a href="/admin">admin</a> → open the run → <b>False positives</b> section.
+        No {emptyLabel} FP data yet.
+        {isAdmin ? (
+          <>
+            <br />
+            Add it in <a href="/admin">admin</a> → open the run → <b>False positives</b> section.
+          </>
+        ) : null}
       </div>
     );
   }
