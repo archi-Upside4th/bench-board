@@ -94,6 +94,7 @@ export function AgentRanking({ agents, detect, exploit, title, lede, isAdmin }: 
                         <th className="num">Precision</th>
                         <th className="num">Recall</th>
                         <th className="num">$/task</th>
+                        <th className="num">Latency</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -120,6 +121,7 @@ export function AgentRanking({ agents, detect, exploit, title, lede, isAdmin }: 
                             <td className="num">{r.precision.toFixed(2)}</td>
                             <td className="num">{r.recall.toFixed(2)}</td>
                             <td className="num">${r.costUsdPerTask.toFixed(2)}</td>
+                            <td className="num">{typeof r.latencySecPerTask === "number" ? r.latencySecPerTask.toFixed(1) + "s" : "—"}</td>
                           </tr>
                         );
                       })}
@@ -143,6 +145,7 @@ export function AgentRanking({ agents, detect, exploit, title, lede, isAdmin }: 
                         <th className="num">Partial</th>
                         <th className="num">Fail</th>
                         <th className="num">$/task</th>
+                        <th className="num">Latency</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -169,6 +172,7 @@ export function AgentRanking({ agents, detect, exploit, title, lede, isAdmin }: 
                             <td className="num cell-warn">{(r.partial * 100).toFixed(0)}%</td>
                             <td className="num cell-bad">{(r.fail * 100).toFixed(0)}%</td>
                             <td className="num">${r.costUsdPerTask.toFixed(2)}</td>
+                            <td className="num">{typeof r.latencySecPerTask === "number" ? r.latencySecPerTask.toFixed(1) + "s" : "—"}</td>
                           </tr>
                         );
                       })}

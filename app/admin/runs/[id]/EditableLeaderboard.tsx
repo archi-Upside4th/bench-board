@@ -156,6 +156,7 @@ function DetectTable({
           <th className="num">Precision</th>
           <th className="num">Recall</th>
           <th className="num">$/task</th>
+          <th className="num">Latency</th>
           <th></th>
         </tr>
       </thead>
@@ -233,6 +234,16 @@ function DetectTable({
                   width={70}
                 />
               </td>
+              <td className="num">
+                <InlineCell
+                  initial={r.latencySecPerTask ?? 0}
+                  fmt={(v) => v.toFixed(1) + "s"}
+                  parse={(s) => Number(s.replace(/s$/, ""))}
+                  action={updateDetectCell}
+                  actionInput={{ ...base, field: "latencySecPerTask" }}
+                  width={70}
+                />
+              </td>
               <td>
                 <DeleteRowButton
                   runId={runId}
@@ -245,7 +256,7 @@ function DetectTable({
           );
         })}
         {rows.length === 0 ? (
-          <tr><td colSpan={8} style={{ padding: 20, color: "var(--mute)", fontSize: 13 }}>No detect results yet — add an agent below.</td></tr>
+          <tr><td colSpan={9} style={{ padding: 20, color: "var(--mute)", fontSize: 13 }}>No detect results yet — add an agent below.</td></tr>
         ) : null}
       </tbody>
     </table>
@@ -280,6 +291,7 @@ function ExploitTable({
           <th className="num">Partial</th>
           <th className="num">Fail</th>
           <th className="num">$/task</th>
+          <th className="num">Latency</th>
           <th></th>
         </tr>
       </thead>
@@ -347,6 +359,16 @@ function ExploitTable({
                   width={70}
                 />
               </td>
+              <td className="num">
+                <InlineCell
+                  initial={r.latencySecPerTask ?? 0}
+                  fmt={(v) => v.toFixed(1) + "s"}
+                  parse={(s) => Number(s.replace(/s$/, ""))}
+                  action={updateExploitCell}
+                  actionInput={{ ...base, field: "latencySecPerTask" }}
+                  width={70}
+                />
+              </td>
               <td>
                 <DeleteRowButton
                   runId={runId}
@@ -359,7 +381,7 @@ function ExploitTable({
           );
         })}
         {rows.length === 0 ? (
-          <tr><td colSpan={9} style={{ padding: 20, color: "var(--mute)", fontSize: 13 }}>No exploit results yet — add an agent below.</td></tr>
+          <tr><td colSpan={10} style={{ padding: 20, color: "var(--mute)", fontSize: 13 }}>No exploit results yet — add an agent below.</td></tr>
         ) : null}
       </tbody>
     </table>

@@ -345,6 +345,7 @@ const detectCellSchema = z.object({
     "f1CiLow",
     "f1CiHigh",
     "costUsdPerTask",
+    "latencySecPerTask",
     "nTasks",
   ]),
   value: z.number(),
@@ -391,7 +392,7 @@ export async function updateDetectCiHalf(input: z.input<typeof detectCiSchema>) 
 const exploitCellSchema = z.object({
   runId: z.number().int(),
   agentId: z.string(),
-  field: z.enum(["success", "partial", "fail", "costUsdPerTask", "nTasks"]),
+  field: z.enum(["success", "partial", "fail", "costUsdPerTask", "latencySecPerTask", "nTasks"]),
   value: z.number(),
 });
 
@@ -620,6 +621,7 @@ const trialSchema = z.object({
   output_tokens: z.number().nullable().optional(),
   reasoning_tokens: z.number().nullable().optional(),
   cached_tokens: z.number().nullable().optional(),
+  latency_s: z.number().nullable().optional(),
   ts: z.string().optional(),
 }).passthrough();
 
@@ -828,6 +830,7 @@ export async function importTrialResults(
             outputTokens: p.raw.output_tokens ?? null,
             reasoningTokens: p.raw.reasoning_tokens ?? null,
             cachedTokens: p.raw.cached_tokens ?? null,
+            latencyS: p.raw.latency_s ?? null,
             ts: p.raw.ts ?? null,
             sourceRunId: p.raw.run_id ?? null,
           };
@@ -854,6 +857,10 @@ export async function importTrialResults(
       const nTasks = tasks.size || allTrials.length;
       const validCosts = allTrials.map((t) => t.costUsd).filter((c): c is number => typeof c === "number");
       const avgCost = validCosts.length ? validCosts.reduce((s, c) => s + c, 0) / validCosts.length : 0;
+      const validLatencies = allTrials.map((t) => t.latencyS).filter((l): l is number => typeof l === "number");
+      const avgLatency = validLatencies.length
+        ? validLatencies.reduce((s, l) => s + l, 0) / validLatencies.length
+        : null;
       if (mode === "detect") {
         const tp = allTrials.reduce((s, t) => s + (t.tpFindings ?? 0), 0);
         const fp = allTrials.reduce((s, t) => s + (t.fpFindings ?? 0), 0);
@@ -870,6 +877,7 @@ export async function importTrialResults(
             precision, recall, f1,
             f1CiLow: f1, f1CiHigh: f1,
             costUsdPerTask: avgCost,
+            latencySecPerTask: avgLatency,
             nTasks,
           })
           .onConflictDoUpdate({
@@ -877,6 +885,7 @@ export async function importTrialResults(
             set: {
               precision, recall, f1, f1CiLow: f1, f1CiHigh: f1,
               costUsdPerTask: avgCost,
+              latencySecPerTask: avgLatency,
               nTasks,
             },
           });
@@ -894,11 +903,12 @@ export async function importTrialResults(
             agentId: agentKey,
             success, partial, fail,
             costUsdPerTask: avgCost,
+            latencySecPerTask: avgLatency,
             nTasks,
           })
           .onConflictDoUpdate({
             target: [exploitResults.runId, exploitResults.agentId],
-            set: { success, partial, fail, costUsdPerTask: avgCost, nTasks },
+            set: { success, partial, fail, costUsdPerTask: avgCost, latencySecPerTask: avgLatency, nTasks },
           });
         exploitAgents++;
       }
@@ -977,6 +987,7 @@ const customAgentCellSchema = z.object({
     "f1CiLow",
     "f1CiHigh",
     "costUsdPerTask",
+    "latencySecPerTask",
     "nTasks",
   ]),
   value: z.number(),
@@ -1026,7 +1037,7 @@ export async function deleteCustomAgentRow(input: z.input<typeof rowKeySchema>) 
 const customAgentExploitCellSchema = z.object({
   runId: z.number().int(),
   agentId: z.string(),
-  field: z.enum(["success", "partial", "fail", "costUsdPerTask", "nTasks"]),
+  field: z.enum(["success", "partial", "fail", "costUsdPerTask", "latencySecPerTask", "nTasks"]),
   value: z.number(),
 });
 

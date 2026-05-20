@@ -110,6 +110,7 @@ export function Leaderboard({ agents, detect, exploit, title, lede, isAdmin }: P
                       <th>Precision</th>
                       <th>Recall</th>
                       <th>$/task</th>
+                      <th>Latency</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -136,6 +137,7 @@ export function Leaderboard({ agents, detect, exploit, title, lede, isAdmin }: P
                           <td className="num-col">{r.precision.toFixed(2)}</td>
                           <td className="num-col">{r.recall.toFixed(2)}</td>
                           <td className="num-col">${r.costUsdPerTask.toFixed(2)}</td>
+                          <td className="num-col">{typeof r.latencySecPerTask === "number" ? r.latencySecPerTask.toFixed(1) + "s" : "—"}</td>
                         </tr>
                       );
                     })}
@@ -159,6 +161,7 @@ export function Leaderboard({ agents, detect, exploit, title, lede, isAdmin }: P
                       <th>Partial</th>
                       <th>Fail</th>
                       <th>$/task</th>
+                      <th>Latency</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -185,6 +188,7 @@ export function Leaderboard({ agents, detect, exploit, title, lede, isAdmin }: P
                           <td className="num-col cell-warn">{(r.partial * 100).toFixed(0)}%</td>
                           <td className="num-col cell-bad">{(r.fail * 100).toFixed(0)}%</td>
                           <td className="num-col">${r.costUsdPerTask.toFixed(2)}</td>
+                          <td className="num-col">{typeof r.latencySecPerTask === "number" ? r.latencySecPerTask.toFixed(1) + "s" : "—"}</td>
                         </tr>
                       );
                     })}

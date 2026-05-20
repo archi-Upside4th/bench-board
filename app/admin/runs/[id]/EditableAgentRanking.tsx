@@ -168,6 +168,7 @@ export function EditableAgentRanking({ runId, agents, detect, exploit }: Props) 
                   <th className="num">Precision</th>
                   <th className="num">Recall</th>
                   <th className="num">$/task</th>
+                  <th className="num">Latency</th>
                   <th></th>
                 </tr>
               </thead>
@@ -226,6 +227,9 @@ export function EditableAgentRanking({ runId, agents, detect, exploit }: Props) 
                       <td className="num">
                         <InlineCell initial={r.costUsdPerTask} fmt={fmtMoney} parse={(s) => Number(s.replace("$", ""))} action={updateCustomAgentCell} actionInput={{ ...base, field: "costUsdPerTask" }} width={70} />
                       </td>
+                      <td className="num">
+                        <InlineCell initial={r.latencySecPerTask ?? 0} fmt={(v) => v.toFixed(1) + "s"} parse={(s) => Number(s.replace(/s$/, ""))} action={updateCustomAgentCell} actionInput={{ ...base, field: "latencySecPerTask" }} width={70} />
+                      </td>
                       <td>
                         <DeleteRowButton runId={runId} agentId={r.agentId} action={deleteCustomAgentRow} confirmText={`Remove ${r.agentId} from Detect for this run?`} />
                       </td>
@@ -233,7 +237,7 @@ export function EditableAgentRanking({ runId, agents, detect, exploit }: Props) 
                   );
                 })}
                 {detectSorted.length === 0 ? (
-                  <tr><td colSpan={8} style={{ padding: 20, color: "var(--mute)", fontSize: 13 }}>No Detect results yet — add an agent below.</td></tr>
+                  <tr><td colSpan={9} style={{ padding: 20, color: "var(--mute)", fontSize: 13 }}>No Detect results yet — add an agent below.</td></tr>
                 ) : null}
               </tbody>
             </table>
@@ -249,6 +253,7 @@ export function EditableAgentRanking({ runId, agents, detect, exploit }: Props) 
                   <th className="num">Partial</th>
                   <th className="num">Fail</th>
                   <th className="num">$/task</th>
+                  <th className="num">Latency</th>
                   <th></th>
                 </tr>
               </thead>
@@ -285,6 +290,9 @@ export function EditableAgentRanking({ runId, agents, detect, exploit }: Props) 
                       <td className="num">
                         <InlineCell initial={r.costUsdPerTask} fmt={fmtMoney} parse={(s) => Number(s.replace("$", ""))} action={updateCustomAgentExploitCell} actionInput={{ ...base, field: "costUsdPerTask" }} width={70} />
                       </td>
+                      <td className="num">
+                        <InlineCell initial={r.latencySecPerTask ?? 0} fmt={(v) => v.toFixed(1) + "s"} parse={(s) => Number(s.replace(/s$/, ""))} action={updateCustomAgentExploitCell} actionInput={{ ...base, field: "latencySecPerTask" }} width={70} />
+                      </td>
                       <td>
                         <DeleteRowButton runId={runId} agentId={r.agentId} action={deleteCustomAgentExploitRow} confirmText={`Remove ${r.agentId} from Exploit for this run?`} />
                       </td>
@@ -292,7 +300,7 @@ export function EditableAgentRanking({ runId, agents, detect, exploit }: Props) 
                   );
                 })}
                 {exploitSorted.length === 0 ? (
-                  <tr><td colSpan={9} style={{ padding: 20, color: "var(--mute)", fontSize: 13 }}>No Exploit results yet — add an agent below.</td></tr>
+                  <tr><td colSpan={10} style={{ padding: 20, color: "var(--mute)", fontSize: 13 }}>No Exploit results yet — add an agent below.</td></tr>
                 ) : null}
               </tbody>
             </table>

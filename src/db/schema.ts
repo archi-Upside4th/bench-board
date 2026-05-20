@@ -48,6 +48,7 @@ export const detectResults = pgTable(
     f1CiLow: real("f1_ci_low").notNull(),
     f1CiHigh: real("f1_ci_high").notNull(),
     costUsdPerTask: real("cost_usd_per_task").notNull(),
+    latencySecPerTask: real("latency_sec_per_task"),
     nTasks: integer("n_tasks").notNull(),
   },
   (t) => ({ pk: primaryKey({ columns: [t.runId, t.agentId] }) })
@@ -81,6 +82,7 @@ export const customAgentResults = pgTable(
     f1CiLow: real("f1_ci_low").notNull(),
     f1CiHigh: real("f1_ci_high").notNull(),
     costUsdPerTask: real("cost_usd_per_task").notNull(),
+    latencySecPerTask: real("latency_sec_per_task"),
     nTasks: integer("n_tasks").notNull(),
   },
   (t) => ({ pk: primaryKey({ columns: [t.runId, t.agentId] }) })
@@ -116,6 +118,7 @@ export const customAgentExploitResults = pgTable(
     partial: real("partial").notNull(),
     fail: real("fail").notNull(),
     costUsdPerTask: real("cost_usd_per_task").notNull(),
+    latencySecPerTask: real("latency_sec_per_task"),
     nTasks: integer("n_tasks").notNull(),
   },
   (t) => ({ pk: primaryKey({ columns: [t.runId, t.agentId] }) })
@@ -155,6 +158,7 @@ export const exploitResults = pgTable(
     partial: real("partial").notNull(),
     fail: real("fail").notNull(),
     costUsdPerTask: real("cost_usd_per_task").notNull(),
+    latencySecPerTask: real("latency_sec_per_task"),
     nTasks: integer("n_tasks").notNull(),
   },
   (t) => ({ pk: primaryKey({ columns: [t.runId, t.agentId] }) })
@@ -184,6 +188,7 @@ export const rawTrials = pgTable("raw_trials", {
   outputTokens: integer("output_tokens"),
   reasoningTokens: integer("reasoning_tokens"),
   cachedTokens: integer("cached_tokens"),
+  latencyS: real("latency_s"),
   ts: text("ts"),
   sourceRunId: text("source_run_id"),
   importedAt: timestamp("imported_at", { withTimezone: true }).defaultNow().notNull(),
